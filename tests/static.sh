@@ -80,6 +80,8 @@ if len(set(focused_sections)) != len(rows):
 for row in rows:
     task=row['id']; mode=row['mode']
     content=(pathlib.Path('tasks')/row['domain']/task/'tutorial.md').read_text().lower()
+    if task == 'A12' and any(line.rstrip().endswith(chr(92) * 2) for line in content.splitlines()):
+        sys.exit('A12 kubeadm init continuation contains multiple trailing backslashes')
     if task in ('A12','A13'):
         if not all(term in content for term in ('ubuntu/debian', 'disposable', 'talos', 'proxmox-managed talos')):
             sys.exit(f"kubeadm guide lacks external-VM boundary: {task}")

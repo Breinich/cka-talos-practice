@@ -38,9 +38,9 @@ Prepare containerd cgroups, swap, kernel modules, and sysctls on both VMs before
 
 ```bash
 # Inside cp-sandbox VM only.
-sudo kubeadm init --kubernetes-version "$K8S_VERSION" \\
-  --apiserver-advertise-address="$CP_VM_IP" \\
-  --control-plane-endpoint="$CP_VM_IP:6443" \\
+sudo kubeadm init --kubernetes-version "$K8S_VERSION" \
+  --apiserver-advertise-address="$CP_VM_IP" \
+  --control-plane-endpoint="$CP_VM_IP:6443" \
   --pod-network-cidr=10.244.0.0/16
 install -d -m 0700 "$HOME/.kube"
 sudo install -o "$(id -u)" -g "$(id -g)" -m 0600 /etc/kubernetes/admin.conf "$HOME/.kube/config"
