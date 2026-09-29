@@ -10,11 +10,11 @@
 
 ## Scenario
 
-The reporting team has no batch resources yet: `ember-batch` and `ember-timer` are absent. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w04}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w04}".
+The reporting team has no batch resources yet: `ember-batch` and `ember-timer` are absent. Use the task namespace (default `cka-practice-w04`).
 
 ## Task
 
-Create an owned `ember-batch` Job that completes exactly once with one parallel `busybox:1.36` Pod and `restartPolicy: Never. Create an owned `ember-timer` CronJob using that image and restart policy, schedule `*/10 * * * *`, suspend it, and retain one successful and one failed Job. Use for the Job and for the CronJob; neither needs API access.
+Create an owned `ember-batch` Job that completes exactly once with one parallel `busybox:1.36` Pod and `restartPolicy: Never`. Create an owned `ember-timer` Create an owned `ember-timer` CronJob using that image and restart policy, schedule `*/10 * * * *`, suspend it, and retain one successful and one failed Job. The Job prints `report-ready` once and the suspended CronJob prints `timer-ready` when later resumed; neither needs API access.
 
 ## Expected state
 

@@ -14,7 +14,7 @@ The `sable-route` Service exposes port 80 to port 80, but its selector misses th
 
 ## Required outcome
 
-Inspect the Service and EndpointSlices. Correct its selector to `app=web` without changing the ports; show a ready address in an EndpointSlice for `sable-route. Do not edit the shared `web` workload.
+Inspect the Service and EndpointSlices. Correct its selector to `app=web` without changing the ports; show a ready address in an EndpointSlice for `sable-route`. Do not edit the shared `web` workload.
 
 ## Scope and constraints
 

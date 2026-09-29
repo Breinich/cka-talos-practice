@@ -46,16 +46,35 @@ expected_count="$(($(wc -l < metadata/tasks.tsv)-1))"
 python3 - <<'PYDOCS' || fail "task prompt contains solution material or lacks matching tutorial"
 import csv, pathlib, re, sys
 rows=list(csv.DictReader(open('metadata/tasks.tsv'), delimiter='\t'))
+focused_sections=[]
 for row in rows:
     base=pathlib.Path('tasks')/row['domain']/row['id']
     prompt=(base/'task.md').read_text()
     tutorial=base/'tutorial.md'
     if not tutorial.is_file(): sys.exit(f"missing tutorial: {base}")
     if re.search(r'^\s*```', prompt, re.M): sys.exit(f"fenced code in {base/'task.md'}")
+    if prompt.count('`') % 2: sys.exit(f"unclosed inline code delimiter in {base/'task.md'}")
+    if re.search(r'(?:tasks/.+/tutorial\.md|SOLUTIONS\.md|answers/)', prompt):
+        sys.exit(f"solution link in answer-free prompt: {base/'task.md'}")
     if re.search(r'\b(?:kubectl|helm|talosctl|kubeadm|crictl|openssl|nslookup)\s+(?:get|describe|apply|create|delete|edit|patch|rollout|top|debug|template|upgrade|init|join|token|version|api-resources|auth|logs|exec|s-client|health|services|service)\b', prompt):
         sys.exit(f"solver command in {base/'task.md'}")
     if re.search(r'\b(?:sh\s+-c|sleep\s+7d|echo\s+[^\n`]+|test\s+-f)\b', prompt):
         sys.exit(f"shell solver snippet in {base/'task.md'}")
+    content=tutorial.read_text()
+    words=re.findall(r"[A-Za-z0-9][A-Za-z0-9._/-]*", content)
+    if len(words) < 180:
+        sys.exit(f"tutorial too short to be substantive: {tutorial} ({len(words)} words)")
+    if '## Concept and task-specific procedure' not in content or '## Task-scoped setup, verification, and cleanup' not in content:
+        sys.exit(f"tutorial missing substantive sections: {tutorial}")
+    focused=content.split('## Concept and task-specific procedure',1)[1].split('## Task-scoped setup',1)[0]
+    if len(re.findall(r"[A-Za-z0-9][A-Za-z0-9._/-]*", focused)) < 60:
+        sys.exit(f"task-specific procedure too short: {tutorial}")
+    technical_terms=re.findall(r'`([^`]{2,})`', focused)
+    if len(set(technical_terms)) < 2:
+        sys.exit(f"tutorial lacks task-specific technical identifiers: {tutorial}")
+    focused_sections.append(re.sub(r'\s+', ' ', focused.strip()))
+if len(set(focused_sections)) != len(rows):
+    sys.exit("task-specific tutorial procedures are not all unique")
 PYDOCS
 total_points="$(awk -F '\t' 'NR>1 {sum+=$3} END {print sum}' metadata/tasks.tsv)"
 grep -Fq "($total_points total configured points" README.md || fail "README score total mismatch"

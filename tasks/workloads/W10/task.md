@@ -10,11 +10,11 @@
 
 ## Scenario
 
-Metrics API availability varies. The owned `ember-autoscale` Deployment has CPU requests already seeded; no HPA is seeded. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w10}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w10}".
+Metrics API availability varies. The owned `ember-autoscale` Deployment has CPU requests already seeded; no HPA is seeded. Use the task namespace (default `cka-practice-w10`).
 
 ## Task
 
-Setup copies `tasks/workloads/W10/resources/hpa/` to `.lab/W10/<namespace>/evidence/W10-overlay/. Edit this instance's local Kustomize overlay so its rendered, owned autoscaling/v2 HPA is in the configured namespace, targets Deployment `ember-autoscale`, and uses CPU utilization 60%, min 1 and max 3. Inspect the rendered output with; only when metrics actually respond, apply that render in the lab namespace. Ensure the target container has CPU request `20m`; wait for AbleToScale. Do not drive artificial load.
+Setup copies `tasks/workloads/W10/resources/hpa/` to `.lab/W10/<namespace>/evidence/W10-overlay`. Edit this instance's local Kustomize overlay so its rendered, owned autoscaling/v2 HPA is in the configured namespace, targets Deployment `ember-autoscale`, and uses CPU utilization 60%, min 1 and max 3. Inspect the rendered output; only when metrics actually respond, apply that render in the lab namespace. Ensure the target container has CPU request `20m`; wait for AbleToScale. Do not drive artificial load.
 
 ## Expected state
 

@@ -10,7 +10,7 @@
 
 ## Scenario and objective
 
-Use a read-only TLS handshake to the configured API server ( with hostname verification) without exporting credentials. In `.lab/A14/<namespace>/evidence/A14.json` record `host`, `issuer` (certificate RDNs as comma-joined `key=value` attributes), `notAfter` (ISO UTC), and `daysRemaining` as an integer from the actual leaf certificate. Confirm the expiry is in the future and the hostname matches the server; do not alter certs or Talos configuration.
+Use a read-only TLS handshake to the configured API server with hostname verification without exporting credentials. In `.lab/A14/<namespace>/evidence/A14.json` record `host`, `issuer` (certificate RDNs as comma-joined `key=value` attributes), `notAfter` (ISO UTC), and `daysRemaining` as an integer from the actual leaf certificate. Confirm the expiry is in the future and the hostname matches the server; do not alter certs or Talos configuration.
 
 ## Scope and constraints
 

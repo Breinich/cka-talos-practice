@@ -14,7 +14,7 @@ The `sable-probe` Deployment serves HTTP on port 80, but its one Pod never becom
 
 ## Required outcome
 
-Inspect Pod conditions and events. Repair only the `web` HTTP readiness probe to use `/` on port 80; keep image `nginx:1.27-alpine` and selector `app=sable-probe. Verify the corrected template and one updated Available replica.
+Inspect Pod conditions and events. Repair only the `web` HTTP readiness probe to use `/` on port 80; keep image `nginx:1.27-alpine` and selector `app=sable-probe`. Verify the corrected template and one updated Available replica.
 
 ## Scope and constraints
 

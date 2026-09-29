@@ -10,7 +10,7 @@
 
 ## Scenario
 
-The Lighthouse relay has one `lighthouse-workspace` Deployment in the lab namespace. Its `producer` already mounts an `emptyDir` at `/workspace`; its `consumer` cannot see that directory. Inspect the template, then repair the owned Deployment without changing its replica count or container images. After the rollout, write the literal `lighthouse-ready` to `/workspace/receipt` from `producer. The two independently checked outcomes are: both containers mount the same `emptyDir` at `/workspace`, and the Ready consumer can read that exact receipt. A Pod restart resets emptyDir contents; write the receipt *after* the repaired rollout.
+The Lighthouse relay has one `lighthouse-workspace` Deployment in the lab namespace. Its `producer` already mounts an `emptyDir` at `/workspace`; its `consumer` cannot see that directory. Inspect the template, then repair the owned Deployment without changing its replica count or container images. After the rollout, write the literal `lighthouse-ready` to `/workspace/receipt` from `producer`. The two independently checked outcomes are: both containers mount the same `emptyDir` at `/workspace`, and the Ready consumer can read that exact receipt. A Pod restart resets emptyDir contents; write the receipt *after* the repaired rollout.
 
 ## Scope and constraints
 

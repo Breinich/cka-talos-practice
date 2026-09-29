@@ -10,7 +10,7 @@
 
 ## Scenario
 
-The owned `ember-release` Deployment starts on `nginx:1.26-alpine`, two replicas, with a RollingUpdate strategy and three retained revisions. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w02}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w02}".
+The owned `ember-release` Deployment starts on `nginx:1.26-alpine`, two replicas, with a RollingUpdate strategy and three retained revisions. Use the task namespace (default `cka-practice-w02`).
 
 ## Task
 

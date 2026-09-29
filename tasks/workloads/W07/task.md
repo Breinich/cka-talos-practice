@@ -10,11 +10,11 @@
 
 ## Scenario
 
-A small audit consumer has not been provisioned: `ember-settings`, `ember-token` and `ember-consumer` are absent. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w07}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w07}".
+A small audit consumer has not been provisioned: `ember-settings`, `ember-token` and `ember-consumer` are absent. Use the task namespace (default `cka-practice-w07`).
 
 ## Task
 
-Create an owned ConfigMap `ember-settings` with `MODE=audit`, an owned Opaque Secret `ember-token` with `TOKEN=dummy`, and an owned `ember-consumer` Pod using `busybox:1.36. Wire both values as environment variables by key reference, not literal values, and keep the Pod running with command. Do not print decoded Secret contents in evidence.
+Create an owned ConfigMap `ember-settings` with `MODE=audit`, an owned Opaque Secret `ember-token` with `TOKEN=dummy`, and an owned `ember-consumer` Pod using `busybox:1.36`. Wire both values as environment variables by key reference, not literal values, and keep the Pod running with a long-lived process. Do not print decoded Secret contents in evidence.
 
 ## Expected state
 

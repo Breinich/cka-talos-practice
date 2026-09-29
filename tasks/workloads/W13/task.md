@@ -10,11 +10,11 @@
 
 ## Scenario
 
-This task seeds its own two-replica `ember-api` Deployment, independently of W01. There is no disruption budget for this Deployment. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w13}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w13}".
+This task seeds its own two-replica `ember-api` Deployment, independently of W01. There is no disruption budget for this Deployment. Use the task namespace (default `cka-practice-w13`).
 
 ## Task
 
-Create an owned PodDisruptionBudget `ember-api` selecting only `app=ember-api`, with `minAvailable: 1. Ensure this Deployment remains healthy before checking permitted disruptions; do not drain or evict a node.
+Create an owned PodDisruptionBudget `ember-api` selecting only `app=ember-api`, with `minAvailable: 1`. Ensure this Deployment remains healthy before checking permitted disruptions; do not drain or evict a node.
 
 ## Expected state
 

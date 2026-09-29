@@ -10,7 +10,7 @@
 
 ## Scenario
 
-Read the synthetic CoreDNS/client incident at `tasks/networking/N09/resources/coredns.txt` and the simulated resolver data in `tasks/networking/N09/resources/dns.json. A query from the lab namespace times out, even though the zone is served. No live CoreDNS read/write or CNI change is part of this task.
+Read the synthetic CoreDNS/client incident at `tasks/networking/N09/resources/coredns.txt` and the simulated resolver data in `tasks/networking/N09/resources/dns.json`. A query from the lab namespace times out, even though the zone is served. No live CoreDNS read/write or CNI change is part of this task.
 
 ## Expected state
 

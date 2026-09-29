@@ -10,7 +10,7 @@
 
 ## Scenario
 
-If setup reports `STORAGECLASS=true`, an operator has selected a disposable storage backend. In the lab namespace, create owned PVC `lighthouse-live` requesting exactly 64Mi with `ReadWriteOnce` and the approved class in `.lab/S03/<namespace>/capabilities.env. Create owned Pod `lighthouse-live-reader` with one container mounting that claim at `/data`; write `lighthouse-live-ready` to `/data/receipt` from that container. Verify both that the claim has real Bound capacity and that the Ready Pod reads the receipt. A `WaitForFirstConsumer` class may remain Pending until the Pod is scheduled.
+If setup reports `STORAGECLASS=true`, an operator has selected a disposable storage backend. In the lab namespace, create owned PVC `lighthouse-live` requesting exactly 64Mi with `ReadWriteOnce` and the approved class in `.lab/S03/<namespace>/capabilities.env`. Create owned Pod `lighthouse-live-reader` with one container mounting that claim at `/data`; write `lighthouse-live-ready` to `/data/receipt` from that container. Verify both that the claim has real Bound capacity and that the Ready Pod reads the receipt. A `WaitForFirstConsumer` class may remain Pending until the Pod is scheduled.
 
 ## Scope and constraints
 

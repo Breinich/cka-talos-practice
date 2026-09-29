@@ -14,7 +14,7 @@ Setup creates an owned `toolbox` Pod in **this task's isolated namespace**. Inve
 
 ## Required outcome
 
-Identify a node running `toolbox` and inspect its Kubernetes `containerRuntimeVersion` and Pod `runtimeClassName` (empty string if unset). On that same node inspect the kubelet and containerd Talos service states. Save `.lab/T10/<namespace>/evidence/T10.json` with `node`, `runtimeVersion`, `podRuntimeClass`, `kubeletService`, `containerdService`; service values must be `Running.
+Identify a node running `toolbox` and inspect its Kubernetes `containerRuntimeVersion` and Pod `runtimeClassName` (empty string if unset). On that same node inspect the kubelet and containerd Talos service states. Save `.lab/T10/<namespace>/evidence/T10.json` with `node`, `runtimeVersion`, `podRuntimeClass`, `kubeletService`, `containerdService`; service values must be `Running`.
 
 ## Scope and constraints
 

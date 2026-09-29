@@ -10,7 +10,7 @@
 
 ## Scenario and objective
 
-Setup copies `tasks/architecture/A08/resources/kustomize/base` (one replica, no namespace or ownership marker) to `.lab/A08/<namespace>/A08-kustomize/. Complete that instance's `.lab/A08/<namespace>/A08-kustomize/overlay/kustomization.yaml` so produces Deployment `<prefix>-kustom-app`, in the active namespace, with two replicas and the owner label on both object and Pod template. Apply only that Deployment to the owned namespace and verify its rollout. Do not touch the base.
+Setup copies `tasks/architecture/A08/resources/kustomize/base` (one replica, no namespace or ownership marker) to `.lab/A08/<namespace>/A08-kustomize/`. Complete that instance's `.lab/A08/<namespace>/A08-kustomize/overlay/kustomization.yaml` so the render produces Deployment `<prefix>-kustom-app`, in the active namespace, with two replicas and the owner label on both object and Pod template. Apply only that Deployment to the owned namespace and verify its rollout. Do not touch the base.
 
 ## Scope and constraints
 

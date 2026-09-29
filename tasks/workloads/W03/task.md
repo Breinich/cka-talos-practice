@@ -10,7 +10,7 @@
 
 ## Scenario
 
-Setup establishes a healthy `ember-recovery` revision, then rolls its `api` container to an unavailable image. This Deployment is separate from W02. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w03}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w03}".
+Setup establishes a healthy `ember-recovery` revision, then rolls its `api` container to an unavailable image. This Deployment is separate from W02. Use the task namespace (default `cka-practice-w03`).
 
 ## Task
 

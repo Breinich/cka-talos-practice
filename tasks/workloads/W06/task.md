@@ -10,7 +10,7 @@
 
 ## Scenario
 
-The owned headless `ember-ledger` Service and its StatefulSet start with three replicas and no claims. No persistent data is involved. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w06}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w06}".
+The owned headless `ember-ledger` Service and its StatefulSet start with three replicas and no claims. No persistent data is involved. Use the task namespace (default `cka-practice-w06`).
 
 ## Task
 

@@ -10,7 +10,7 @@
 
 ## Scenario
 
-Write `.lab/N11/<namespace>/evidence/N11-services.yaml` with two owned Services in the configured namespace, then validate these local examples with a client-side dry-run only. `estuary-node-demo` models a NodePort for the API selector at Service port 8080, named HTTP target port and nodePort 30081. `estuary-alias-demo` models an ExternalName alias to `estuary.lab.invalid.
+Write `.lab/N11/<namespace>/evidence/N11-services.yaml` with two owned Services in the configured namespace, then validate these local examples with a client-side dry-run only. `estuary-node-demo` models a NodePort for the API selector at Service port 8080, named HTTP target port and nodePort 30081. `estuary-alias-demo` models an ExternalName alias to `estuary.lab.invalid`.
 
 ## Expected state
 

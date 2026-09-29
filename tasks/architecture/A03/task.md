@@ -10,7 +10,7 @@
 
 ## Scenario and objective
 
-Setup seeds `relay-identity`, Role `relay-reader` with only `get` on Pods, and RoleBinding `relay-reader. Inventory these three objects, then adjust the owned Role so that this identity can get, list and watch Pods, and cannot create, patch, delete, or access Secrets. Preserve the namespace-scoped binding and the exact subject. Verify via.
+Setup seeds `relay-identity`, Role `relay-reader` with only `get` on Pods, and RoleBinding `relay-reader`. Inventory these three objects, then adjust the owned Role so that this identity can get, list and watch Pods, and cannot create, patch, delete, or access Secrets. Preserve the namespace-scoped binding and the exact subject. Verify effective authorization through impersonated `can-i` checks.
 
 ## Scope and constraints
 

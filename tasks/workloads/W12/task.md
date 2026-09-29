@@ -10,7 +10,7 @@
 
 ## Scenario
 
-A single-Pod composition exercise has no starting Pod. The `ember-composed` Pod must share ephemeral files; no persistent volumes are allowed. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w12}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w12}".
+A single-Pod composition exercise has no starting Pod. The `ember-composed` Pod must share ephemeral files; no persistent volumes are allowed. Use the task namespace (default `cka-practice-w12`).
 
 ## Task
 

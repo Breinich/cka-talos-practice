@@ -10,11 +10,11 @@
 
 ## Scenario
 
-The lab has an owned `ember-api` Deployment in the configured namespace with one replica and undersized requests. It serves a small internal HTTP endpoint. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w01}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w01}".
+The lab has an owned `ember-api` Deployment in the configured namespace with one replica and undersized requests. It serves a small internal HTTP endpoint. Use the task namespace (default `cka-practice-w01`).
 
 ## Task
 
-Inspect its current Pod template. Leave two available replicas, retain `nginx:1.27-alpine` and `app=ember-api`, and set the `api` container requests to CPU `20m`, memory `32Mi`; limits must be CPU `100m`, memory `64Mi. Do not change the shared `web` Deployment.
+Inspect its current Pod template. Leave two available replicas, retain `nginx:1.27-alpine` and `app=ember-api`, and set the `api` container requests to CPU `20m`, memory `32Mi`; limits must be CPU `100m`, memory `64Mi`. Do not change the shared `web` Deployment.
 
 ## Expected state
 

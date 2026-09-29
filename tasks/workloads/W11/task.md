@@ -10,11 +10,11 @@
 
 ## Scenario
 
-An isolated HTTP responder `ember-guard` is absent. It must expose port 8080 without privilege escalation. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w11}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w11}".
+An isolated HTTP responder `ember-guard` is absent. It must expose port 8080 without privilege escalation. Use the task namespace (default `cka-practice-w11`).
 
 ## Task
 
-Create an owned Pod using `busybox:1.36` with command `httpd -f -p 8080`, TCP readiness and liveness probes on 8080, container `runAsUser: 10001`, and `allowPrivilegeEscalation: false. Keep it running; avoid a privileged port.
+Create an owned Pod using `busybox:1.36` with command `httpd -f -p 8080`, TCP readiness and liveness probes on 8080, container `runAsUser: 10001`, and `allowPrivilegeEscalation: false`. Keep it running; avoid a privileged port.
 
 ## Expected state
 

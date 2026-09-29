@@ -10,11 +10,11 @@
 
 ## Scenario
 
-There is no `ember-observer` DaemonSet. Eligible nodes are Ready, schedulable workers labeled `node-role.kubernetes.io/worker`; do not touch nodes. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w05}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w05}".
+There is no `ember-observer` DaemonSet. Eligible nodes are Ready, schedulable workers labeled `node-role.kubernetes.io/worker`; do not touch nodes. Use the task namespace (default `cka-practice-w05`).
 
 ## Task
 
-Discover the eligible workers. Create an owned `ember-observer` DaemonSet selecting `app=ember-observer`, targeting only worker-labeled nodes and using `busybox:1.36` with CPU `5m`/memory `8Mi` requests and command. Do not add a toleration that bypasses taints.
+Discover the eligible workers. Create an owned `ember-observer` DaemonSet selecting `app=ember-observer`, targeting only worker-labeled nodes and using `busybox:1.36` with CPU `5m`/memory `8Mi` requests and a long-running process. Do not add a toleration that bypasses taints.
 
 ## Expected state
 

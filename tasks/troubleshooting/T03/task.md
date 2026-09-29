@@ -10,7 +10,7 @@
 
 ## Scenario
 
-The owned Pod `sable-worker` requests a nonexistent node label (`cka-lab.io/nonexistent=true`); the `sleeper` container uses `busybox:1.36.
+The owned Pod `sable-worker` requests a nonexistent node label (`cka-lab.io/nonexistent=true`); the `sleeper` container uses `busybox:1.36`.
 
 ## Required outcome
 

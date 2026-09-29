@@ -10,7 +10,7 @@
 
 ## Scenario and objective
 
-Setup creates a dedicated namespace with Pod Security `audit` and `warn` labels set to `baseline`, without enforcement. Inspect; change **only this task namespace's** `pod-security.kubernetes.io/enforce` label to `baseline`. In `.lab/A15/<namespace>/evidence/A15.json` record `validatingWebhookCount`, `mutatingWebhookCount`, and `podSecurityEnforce` (`baseline`). Verify the counts against the live lists and namespace label; do not submit a privileged probe Pod or edit shared admission objects.
+Setup creates a dedicated namespace with Pod Security `audit` and `warn` labels set to `baseline`, without enforcement. Inspect both webhook inventories; change **only this task namespace's** `pod-security.kubernetes.io/enforce` label to `baseline`. In `.lab/A15/<namespace>/evidence/A15.json` record `validatingWebhookCount`, `mutatingWebhookCount`, and `podSecurityEnforce` (`baseline`). Verify the counts against the live lists and namespace label; do not submit a privileged probe Pod or edit shared admission objects.
 
 ## Scope and constraints
 

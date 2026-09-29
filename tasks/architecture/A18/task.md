@@ -10,7 +10,7 @@
 
 ## Scenario and objective
 
-The synthetic collector at `tasks/architecture/A18/resources/component.yaml` is not a real cluster service. Copy the bundled component into `.lab/A18/<namespace>/evidence/A18-overlay` and create a Kustomize overlay there (Kustomize does not allow a base outside its load root); render `.lab/A18/<namespace>/evidence/A18-component.yaml` with a local render. Adjust to two replicas and the active namespace, preserving the owner label on Deployment and Pod template.
+The synthetic collector at `tasks/architecture/A18/resources/component.yaml` is not a real cluster service. Copy the bundled component into `.lab/A18/<namespace>/evidence/A18-overlay` and create a Kustomize overlay there (Kustomize does not allow a base outside its load root); render `.lab/A18/<namespace>/evidence/A18-component.yaml` locally. Adjust to two replicas and the active namespace, preserving the owner label on Deployment and Pod template.
 
 ## Scope and constraints
 

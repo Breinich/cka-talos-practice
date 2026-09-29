@@ -1,38 +1,15 @@
-# A18 tutorial — Render a component overlay offline
+# A18 Tutorial: Render a component overlay offline
 
-> **Spoilers:** this is the worked guide. Attempt [`task.md`](task.md) first if desired; prompts contain no solutions.
+> **Spoilers ahead.** This walkthrough is separate from the exam prompt. See [all solution tutorials](../../../SOLUTIONS.md).
 
-## Objective and concepts
+## Concept and task-specific procedure
 
-The scenario, constraints, exact object names and end-state criteria are task-specific. The worked walkthrough below expands the answer-free prompt into the concrete fields and operations to use.
+**Kustomize local bases must live below the overlay root.** The source Deployment `collector-agent` has one replica and no task ownership on its Pod template; use a copied local component.
 
-## Task-specific walkthrough
+Copy `resources/component.yaml` and `kustomization.yaml` into `$LAB/evidence/A18-overlay/`. Edit component namespace to `$NS`; overlay adds replicas=2 and owner label to Deployment and Pod template while preserving app selector and nginx:1.27-alpine. Render with `kubectl kustomize "$LAB/evidence/A18-overlay" > "$LAB/evidence/A18-component.yaml"`. Inspect rendered YAML and verify exactly two replicas, namespace, labels and unchanged selector/image. The scorer rebuilds overlay and compares semantic render. Never apply synthetic collector.
 
-## Scenario and objective
+## Task-scoped setup, verification, and cleanup
 
-The synthetic collector at `tasks/architecture/A18/resources/component.yaml` is not a real cluster service. Copy the bundled component into `.lab/A18/<namespace>/evidence/A18-overlay` and create a Kustomize overlay there (Kustomize does not allow a base outside its load root); render `.lab/A18/<namespace>/evidence/A18-component.yaml` with `kubectl kustomize`. Adjust to two replicas and the active namespace, preserving the owner label on Deployment and Pod template. The scorer independently rebuilds your overlay and compares semantic output with the saved render. Do not apply the component.
+Set `NS` to the configured task namespace and `LAB` to this task's evidence root (`.lab/A18/$NS` for namespaced live tasks, or the path given in the procedure for offline/read-only exercises). Use the task's own setup only when the mode requires it; setup creates/seeds this task's isolated scope. Inspect the exact object/resource before mutation, apply only the fields described above, then inspect controller status and run `./tasks/architecture/A18/score.sh` (add `--json` for criterion detail). For offline simulations use local parser/client dry-run only; never apply synthetic data. If the task is conditional and its capability gate is false, stop with SKIP rather than installing a controller, metrics server, storage backend, or debug capability. Cleanup only via this task's lifecycle after data review; persistent claims may intentionally block teardown.
 
-The active namespace is `CKA_LAB_NAMESPACE` (default `cka-practice-a18`); the active prefix is `CKA_LAB_PREFIX` (default `cka-practice`). If setup used flags, export matching `CKA_LAB_PREFIX` and `CKA_LAB_NAMESPACE` before validation; evidence is isolated under `.lab/A18/<namespace>/evidence/` (no cluster state file or namespace is created).
-
-## Step-by-step approach
-
-1. **Establish the boundary.** Check the mode and work only in this task's namespace or local evidence path. Verify your configured namespace and context before any live API query. This task's own input files are in `resources/` when applicable.
-2. **Inspect state and source inputs first.** Query the named object and its dependencies; for a controller, inspect its template, status and events before editing. For local simulations, read the supplied file and preserve all non-target fields. Prefer narrow inspection such as `kubectl -n "$NS" get <kind> <name> -o yaml`, `kubectl -n "$NS" describe <kind> <name>`, and `kubectl -n "$NS" get events --sort-by=.lastTimestamp`. Replace placeholders only with active scope values.
-3. **Apply the smallest correction or create the requested artifact.** Preserve object identity, selectors, ports, labels, image, replicas and existing safe properties unless the prompt explicitly requires a change. Use declarative edits or an evidence manifest when appropriate. Do not use the task itself as a reason to mutate cluster-scoped resources, nodes or unrelated workloads.
-4. **Wait for the system to converge.** After permitted changes, wait for the specific rollout, Ready condition, binding, endpoint, capacity, or status needed. Inspect the resulting state independently; a successful request alone is not proof. For read-only tasks, record observations as seen. For simulations, reason only from provided inputs and never apply them.
-5. **Write required evidence exactly.** Create the named file and keys/fields exactly as specified in the prompt. Pull live values from fresh inspection. Avoid credentials, Secret data, private keys, kubeconfigs, and irrelevant system output.
-6. **Check the task result.** Run the task-local score wrapper after the solution is in place. A failed criterion identifies a mismatch to investigate; do not alter scorer or fixtures.
-
-## Command patterns
-
-Set `NS` to the configured task namespace. Useful read-only patterns include `kubectl -n "$NS" get pods -o wide`, `kubectl -n "$NS" get <kind> <name> -o yaml`, and `kubectl -n "$NS" describe pod <pod>`. For Deployment convergence, use `kubectl -n "$NS" rollout status deployment/<name>` and inspect replica counts afterwards. For Services, inspect EndpointSlices as well as selectors and ports. For offline YAML, client dry-run is a syntax/render check only and must not be followed by an apply. Use `helm template` or `kubectl kustomize` only where the task specifically asks for a local render. Talos queries are read-only; do not restart services or change machine configuration.
-
-## Verification and pitfalls
-
-Compare exact fields and values, not general intent: resource names, selector labels, API versions, container names, port names, evidence keys, path, namespace and quantities matter. Controller-owned children can lag behind the parent update. Preserve immutable Pod fields by replacing only the owned Pod when the prompt requires it. A scheduled Pod or an EndpointSlice address alone does not prove all task conditions. Read the task-specific scoring criteria after every change.
-
-## Safety and cleanup
-
-Offline simulations, hostPath/PV samples, NodePort examples, hypothetical ingress/Gateway resources, synthetic operator manifests and component renderings remain local; never apply them. Never perform kubeadm or Talos destructive operations on a homelab, induce pressure, drain nodes, or expose live workloads. Conditional capability unavailable means stop and accept SKIP/UNSUPPORTED; do not install infrastructure. Clean only the task's own verified disposable namespace with its lifecycle wrapper. Storage teardown can intentionally refuse claims/volumes; assess data and reclaim policy manually rather than force deletion.
-
-**Source inputs:** `architecture/A18/resources/` when present. See [`task.md`](task.md) for the answer-free prompt.
+**Safety:** do not broaden namespace scope, expose credentials, or mutate nodes, cluster-scoped resources, Talos config, etcd, or a homelab. A12/A13 operations are only for disposable snapshot-backed VMs; the guides intentionally give no copy-paste bootstrap/upgrade command sequence for Talos.

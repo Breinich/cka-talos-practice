@@ -10,7 +10,7 @@
 
 ## Scenario
 
-The `estuary-catalog` Service already exists but its EndpointSlice has no ready API address. Compare its selector with the running `estuary-api` Deployment; repair only `estuary-catalog.
+The `estuary-catalog` Service already exists but its EndpointSlice has no ready API address. Compare its selector with the running `estuary-api` Deployment; repair only `estuary-catalog`.
 
 ## Expected state
 

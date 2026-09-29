@@ -10,11 +10,11 @@
 
 ## Scenario
 
-The owned two-replica `ember-placement` Deployment currently has no scheduling rules. It should spread onto two distinct Ready, untainted workers. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w08}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w08}".
+The owned two-replica `ember-placement` Deployment currently has no scheduling rules. It should spread onto two distinct Ready, untainted workers. Use the task namespace (default `cka-practice-w08`).
 
 ## Task
 
-Discover worker labels and topology. Set required node affinity for existence of `node-role.kubernetes.io/worker`; set **required** Pod anti-affinity against `app=ember-placement` on `kubernetes.io/hostname. Keep two replicas and do not label/taint nodes.
+Discover worker labels and topology. Set required node affinity for existence of `node-role.kubernetes.io/worker`; set **required** Pod anti-affinity against `app=ember-placement` on `kubernetes.io/hostname`. Keep two replicas and do not label/taint nodes.
 
 ## Expected state
 
