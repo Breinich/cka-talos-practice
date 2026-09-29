@@ -15,6 +15,9 @@ case "$*" in
   'get configmap/lab-info '*) [[ "$MOCK_MODE" == collision ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
   'get service/estuary-front '*) [[ "$MOCK_MODE" == collision-network ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
   'get deployment.apps/lighthouse-workspace '*) [[ "$MOCK_MODE" == collision-storage ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
+  'get pod/dns-stray '*) [[ "$MOCK_MODE" == collision-troubleshooting ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; [[ "${MOCK_SEEDS_PRESENT:-false}" == true ]] && { case "$*" in *jsonpath*) echo cka-talos-practice;; esac; exit; }; exit 1;;
+  'get pod/sable-worker '*) [[ "${MOCK_SEEDS_PRESENT:-false}" == true ]] && { case "$*" in *jsonpath*) echo cka-talos-practice;; esac; exit; }; exit 1;;
+  'get pod sable-worker '*|'get pod dns-stray '*) [[ "${MOCK_SEEDS_PRESENT:-false}" == true ]] && { case "$*" in *jsonpath*) echo cka-talos-practice;; esac; exit; }; exit 1;;
   'get storageclass disposable-csi -o json') echo '{"provisioner":"example.test/csi","reclaimPolicy":"Delete","volumeBindingMode":"WaitForFirstConsumer","allowVolumeExpansion":true}'; exit;;
   'get '*'-o jsonpath='*)
     case "$*" in
@@ -23,7 +26,7 @@ case "$*" in
       *'ds node-agent'*'desiredNumberScheduled'*|*'ds node-agent'*'numberReady'*) [[ "$MOCK_MODE" == positive ]] && echo 2 || echo 0; exit;;
       *'svc app-service'* ) echo ClusterIP; exit;;
       *'svc port-fixed'* ) echo http; exit;;
-      *'svc broken-service'* ) echo web; exit;;
+      *'svc sable-route'* ) echo web; exit;;
       *'get service '*'-l cka-lab.io/owner=cka-talos-practice'* ) echo web; exit;;
       *'httproute web-route'*'parentRefs'*) echo gateway1; exit;;
       *'httproute web-route'*'backendRefs'*) echo web; exit;;
@@ -34,6 +37,8 @@ case "$*" in
   'get ds node-agent '* ) exit;;
   'get '*'-o json')
     case "$*" in
+      *'service sable-route'*) echo '{"metadata":{"namespace":"cka-practice","labels":{"cka-lab.io/owner":"cka-talos-practice"}},"spec":{"selector":{"app":"web"},"ports":[{"port":80,"targetPort":80}]}}';;
+      *'get endpointslices '* ) [[ "$MOCK_MODE" == positive ]] && echo '{"items":[{"endpoints":[{"conditions":{"ready":true},"addresses":["10.1.2.3"]}]}]}' || echo '{"items":[]}';;
       *'networkpolicy default-deny'*) echo '{"spec":{"policyTypes":["Ingress","Egress"],"podSelector":{}}}';;
       *'networkpolicy allow-web'*)
         [[ "$MOCK_MODE" == positive ]] && echo '{"spec":{"podSelector":{"matchLabels":{"app":"web"}},"ingress":[{"from":[{"podSelector":{"matchLabels":{"app":"client"}}}],"ports":[{"port":80}]}],"egress":[{"to":[{"namespaceSelector":{"matchLabels":{"kubernetes.io/metadata.name":"kube-system"}}}],"ports":[{"port":53}]}]}}' || echo '{"spec":{"podSelector":{},"ingress":[{}],"egress":[{}]}}';;
@@ -49,6 +54,7 @@ case "$*" in
   'get '* ) exit 1;;
   'rollout status deployment/ember-recovery '*|'set image deployment/ember-recovery '*) exit;;
   apply*) [[ "$MOCK_MODE" == restore || "$MOCK_MODE" == setup ]] || exit 1; if [[ "$*" == *"-f -"* ]]; then cat >/dev/null; fi; exit;;
+  'delete pod sable-worker '*|'delete pod dns-stray '*) [[ "$MOCK_MODE" == setup || "$MOCK_MODE" == restore ]] || exit 1; exit;;
   delete*) [[ "$MOCK_MODE" == restore ]] || exit 1; exit;;
   *) exit 1;;
 esac

@@ -76,6 +76,19 @@ assert all(i['metadata']['namespace']=='__NAMESPACE__' for i in items)
 print('ok: networking starting faults are seeded and scoped')
 PYTEST
 python3 - <<'PYTEST'
+import yaml
+s=list(yaml.safe_load_all(open('fixtures/troubleshooting/broken.yaml')))
+by_name={d['metadata']['name']: d for d in s}
+assert len(s)==6 and all(d['metadata']['namespace']=='__NAMESPACE__' for d in s)
+assert by_name['dns-stray']['spec']['dnsPolicy']=='None'
+assert by_name['dns-stray']['spec']['dnsConfig']['nameservers']==['192.0.2.53']
+assert by_name['log-churn']['spec']['template']['spec']['containers'][0]['command'][-1].endswith('exit 17')
+assert by_name['sable-worker']['spec']['nodeSelector']
+assert all(d['metadata']['labels']['cka-lab.io/owner']=='cka-talos-practice' for d in s)
+assert len(list(yaml.safe_load_all(open('samples/troubleshooting/qos.yaml'))))==3
+print('ok: troubleshooting seeded faults and offline eviction case')
+PYTEST
+python3 - <<'PYTEST'
 import pathlib, yaml
 base=pathlib.Path('samples/architecture')
 for filename in ('crd.yaml','component.yaml','chart/Chart.yaml','chart/values.yaml'):
@@ -104,6 +117,7 @@ PYTEST
 python3 ./tests/storage.py
 python3 ./tests/workloads.py
 python3 ./tests/networking.py
+python3 ./tests/troubleshooting.py
 
 grep -q 'kubectl apply' scripts/setup.sh || fail "setup has no fixture apply"
 grep -q 'ns_owned' scripts/teardown.sh || fail "teardown lacks ownership gate"

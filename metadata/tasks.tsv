@@ -47,15 +47,15 @@ S03	storage	2	conditional	storageclass	Bind a disposable data claim
 S04	storage	2	read-only	core	Inventory storage without mutating it
 S05	storage	2	conditional	expandable	Grow a bound disposable claim
 S06	storage	2	simulation	core	Protect an offline records volume
-T01	troubleshooting	2	live	core	Repair a broken Deployment image
-T02	troubleshooting	2	live	core	Repair failed readiness
-T03	troubleshooting	2	live	core	Repair an unschedulable Pod
-T04	troubleshooting	2	live	core	Repair Service routing
-T05	troubleshooting	2	live	core	Diagnose DNS from a Pod
-T06	troubleshooting	2	live	core	Use logs and previous logs
-T07	troubleshooting	2	live	core	Use events and describe
-T08	troubleshooting	2	conditional	metrics	Inspect resource usage
-T09	troubleshooting	2	read-only	core	Assess node conditions and capacity
-T10	troubleshooting	2	read-only	talosctl	Inspect container runtime and kubelet
-T11	troubleshooting	3	read-only	talosctl	Diagnose control-plane and etcd health
-T12	troubleshooting	2	live	core	Debug with an ephemeral container
+T01	troubleshooting	2	live	core	Recover the image pipeline
+T02	troubleshooting	2	live	core	Restore the admission probe
+T03	troubleshooting	2	live	core	Clear a scheduling dead end
+T04	troubleshooting	2	live	core	Reconnect a Service to its backends
+T05	troubleshooting	2	live	core	Repair a Pod-local DNS fault
+T06	troubleshooting	2	live	core	Capture the failed attempt before repair
+T07	troubleshooting	2	simulation	core	Rank eviction candidates offline
+T08	troubleshooting	2	conditional	metrics	Read a metrics snapshot
+T09	troubleshooting	2	read-only	core	Build a node pressure inventory
+T10	troubleshooting	2	read-only	talosctl	Trace kubelet to its runtime
+T11	troubleshooting	3	read-only	talosctl	Correlate control-plane signals
+T12	troubleshooting	2	conditional	debug	Inspect Pod namespaces without host access

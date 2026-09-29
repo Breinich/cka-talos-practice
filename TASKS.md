@@ -80,15 +80,15 @@ Tasks are organized by the five current CKA pillars. Each task file contains its
 
 | ID | Task |
 |---|---|
-| [T01](tasks/troubleshooting/T01.md) | Repair a broken Deployment image |
-| [T02](tasks/troubleshooting/T02.md) | Repair failed readiness |
-| [T03](tasks/troubleshooting/T03.md) | Repair an unschedulable Pod |
-| [T04](tasks/troubleshooting/T04.md) | Repair Service routing |
-| [T05](tasks/troubleshooting/T05.md) | Diagnose DNS from a Pod |
-| [T06](tasks/troubleshooting/T06.md) | Use logs and previous logs |
-| [T07](tasks/troubleshooting/T07.md) | Use events and describe |
-| [T08](tasks/troubleshooting/T08.md) | Inspect resource usage |
-| [T09](tasks/troubleshooting/T09.md) | Assess node conditions and capacity |
-| [T10](tasks/troubleshooting/T10.md) | Inspect container runtime and kubelet |
-| [T11](tasks/troubleshooting/T11.md) | Diagnose control-plane and etcd health |
-| [T12](tasks/troubleshooting/T12.md) | Debug with an ephemeral container |
+| [T01](tasks/troubleshooting/T01.md) | Recover the image pipeline |
+| [T02](tasks/troubleshooting/T02.md) | Restore the admission probe |
+| [T03](tasks/troubleshooting/T03.md) | Clear a scheduling dead end |
+| [T04](tasks/troubleshooting/T04.md) | Reconnect a Service to its backends |
+| [T05](tasks/troubleshooting/T05.md) | Repair a Pod-local DNS fault |
+| [T06](tasks/troubleshooting/T06.md) | Capture the failed attempt before repair |
+| [T07](tasks/troubleshooting/T07.md) | Rank eviction candidates offline |
+| [T08](tasks/troubleshooting/T08.md) | Read a metrics snapshot |
+| [T09](tasks/troubleshooting/T09.md) | Build a node pressure inventory |
+| [T10](tasks/troubleshooting/T10.md) | Trace kubelet to its runtime |
+| [T11](tasks/troubleshooting/T11.md) | Correlate control-plane signals |
+| [T12](tasks/troubleshooting/T12.md) | Inspect Pod namespaces without host access |

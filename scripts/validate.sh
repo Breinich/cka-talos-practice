@@ -15,7 +15,7 @@ done
 need kubectl; need python3; validate_scope
 META="$ROOT/metadata/tasks.tsv"; EVIDENCE="$STATE_DIR/evidence"
 CAP="$STATE_DIR/capabilities.env"
-METRICS=false; NETWORKPOLICY=false; INGRESS=false; GATEWAY=false; STORAGECLASS=false; EXPANDABLE=false; HELM=false; TALOSCTL=false
+METRICS=false; NETWORKPOLICY=false; INGRESS=false; GATEWAY=false; STORAGECLASS=false; EXPANDABLE=false; HELM=false; TALOSCTL=false; DEBUG=false
 [[ -r "$CAP" ]] && source "$CAP"
 export CKA_LAB_STORAGE_CLASS="${CKA_LAB_STORAGE_CLASS:-}"
 
@@ -54,6 +54,7 @@ validate_task() {
     disposable-kubeadm:*) skip "$id" UNSUPPORTED "$max"; return;;
     read-only:talosctl) [[ "$TALOSCTL" == true ]] || { skip "$id" UNSUPPORTED "$max"; return; };;
     conditional:metrics) [[ "$METRICS" == true ]] || { skip "$id" SKIP "$max"; return; };;
+    conditional:debug) [[ "$DEBUG" == true ]] || { skip "$id" SKIP "$max"; return; };;
     conditional:networkpolicy) [[ "$NETWORKPOLICY" == true ]] || { skip "$id" SKIP "$max"; return; };;
     conditional:ingress) [[ "$INGRESS" == true ]] || { skip "$id" SKIP "$max"; return; };;
     conditional:gateway) [[ "$GATEWAY" == true ]] || { skip "$id" SKIP "$max"; return; };;
@@ -107,18 +108,11 @@ validate_task() {
       check python3 "$ROOT/scripts/check_storage.py" "$id" 1
       check python3 "$ROOT/scripts/check_storage.py" "$id" 2
       finish;;
-    T01) begin "$id" "$max"; check bash -c "kubectl rollout status deploy/broken-image -n '$NAMESPACE' --timeout=1s"; check bash -c "[[ \$(getj deploy broken-image '{.spec.template.spec.containers[0].image}') != *no-such* ]]"; finish;;
-    T02) begin "$id" "$max"; check bash -c "kubectl rollout status deploy/broken-ready -n '$NAMESPACE' --timeout=1s"; check bash -c "[[ \$(getj deploy broken-ready '{.spec.template.spec.containers[0].readinessProbe.httpGet.port}') != 81 ]]"; finish;;
-    T03) begin "$id" "$max"; check bash -c "[[ \$(getj pod unschedulable '{.status.phase}') == Running ]]"; check bash -c "[[ -z \$(getj pod unschedulable '{.spec.nodeSelector.cka-lab\\.io/nonexistent}') ]]"; finish;;
-    T04) begin "$id" "$max"; check ready_endpoint_for broken-service; check bash -c "[[ \$(getj svc broken-service '{.spec.selector.app}') == web ]]"; finish;;
-    T05) begin "$id" "$max"; check evidence_has T05 'nslookup|dig|getent'; check evidence_has T05 'cluster.local|kubernetes.default'; finish;;
-    T06) begin "$id" "$max"; check evidence_has T06 'logs'; check evidence_has T06 'previous|-p'; finish;;
-    T07) begin "$id" "$max"; check evidence_has T07 'event|warning|failed'; check evidence_has T07 'describe'; finish;;
-    T08) begin "$id" "$max"; check evidence_has T08 'cpu'; check evidence_has T08 'memory'; finish;;
-    T09) begin "$id" "$max"; check evidence_has T09 'Ready|condition'; check evidence_has T09 'allocatable|capacity'; finish;;
-    T10) begin "$id" "$max"; check evidence_has T10 'containerd|cri'; check evidence_has T10 'kubelet'; finish;;
-    T11) begin "$id" "$max"; check evidence_has T11 'etcd'; check evidence_has T11 'apiserver|control'; finish;;
-    T12) begin "$id" "$max"; check evidence_has T12 'debug|ephemeral'; check evidence_has T12 'target|process|network'; finish;;
+    T01|T02|T03|T04|T05|T06|T07|T08|T09|T10|T11|T12)
+      begin "$id" "$max"
+      check python3 "$ROOT/scripts/check_troubleshooting.py" "$id" 1
+      check python3 "$ROOT/scripts/check_troubleshooting.py" "$id" 2
+      finish;;
     *) log "validator missing for $id"; return 2;;
   esac
 }

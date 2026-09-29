@@ -120,6 +120,11 @@ assert_score W10 SKIP
 assert_score N01 FAIL
 assert_score N08 FAIL
 assert_score T04 PARTIAL
+assert_score T05 FAIL
+assert_score T06 FAIL
+assert_score T07 FAIL
+assert_score T08 SKIP
+assert_score T12 SKIP
 assert_score N07 FAIL
 export MOCK_MODE=positive
 assert_score W04 FAIL
@@ -128,6 +133,7 @@ assert_score W10 SKIP
 assert_score N01 FAIL
 assert_score N08 FAIL
 assert_score T04 PASS
+assert_score T05 FAIL
 assert_score N07 FAIL
 assert_score N05 FAIL
 if grep -Eq '^(apply|delete|create|label)' "$tmp/log"; then echo 'mock scorer mutated resources' >&2; exit 1; fi
@@ -142,6 +148,10 @@ if "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1; then echo 'network fixture collisi
 grep -q 'fixture collision with unowned service/estuary-front' "$tmp/out"
 [[ ! -f "$tmp/state/state.env" ]]
 if grep -Eq '^(apply|delete|create|label)' "$tmp/log"; then echo 'network collision mutated resources' >&2; exit 1; fi
+export MOCK_MODE=collision-troubleshooting
+if "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1; then echo 'troubleshooting fixture collision accepted' >&2; exit 1; fi
+grep -q 'fixture collision with unowned pod/dns-stray' "$tmp/out"
+[[ ! -f "$tmp/state/state.env" ]]
 export MOCK_MODE=collision
 if "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1; then echo 'fixture collision accepted' >&2; exit 1; fi
 grep -q 'fixture collision' "$tmp/out"
@@ -158,11 +168,17 @@ grep -q '^EXPANDABLE=true$' "$tmp/state/capabilities.env"
 "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
 grep -q '^STORAGECLASS=false$' "$tmp/state/capabilities.env"
 baseline="$(sha256sum "$tmp/state/before.yaml")"
-"$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
+MOCK_SEEDS_PRESENT=true "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
 [[ "$(sha256sum "$tmp/state/before.yaml")" == "$baseline" ]]
+grep -q 'delete pod sable-worker -n cka-practice --wait=true' "$tmp/log"
+grep -q 'delete pod dns-stray -n cka-practice --wait=true' "$tmp/log"
 grep -q 'rollout status deployment/ember-recovery' "$tmp/log"
 grep -q 'set image deployment/ember-recovery api=nginx:no-such-tag-cka-practice' "$tmp/log"
 grep -q 'get service/estuary-front -n cka-practice' "$tmp/log"
+grep -q 'get pod/dns-stray -n cka-practice' "$tmp/log"
+grep -q 'get deployment.apps/log-churn -n cka-practice' "$tmp/log"
+grep -q 'auth can-i update pods/ephemeralcontainers -n cka-practice' "$tmp/log"
+grep -q '^DEBUG=false$' "$tmp/state/capabilities.env"
 python3 - "$tmp/state/before.yaml" <<'PY'
 import json,sys
 items=json.load(open(sys.argv[1]))['items']

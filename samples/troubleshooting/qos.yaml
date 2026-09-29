@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata: {name: archive-index}
+spec:
+  containers:
+  - name: indexer
+    image: busybox:1.36
+    resources: {requests: {cpu: 20m, memory: 16Mi}, limits: {cpu: 50m, memory: 32Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: edge-cache}
+spec:
+  containers:
+  - name: cache
+    image: busybox:1.36
+    resources: {requests: {cpu: 10m, memory: 8Mi}, limits: {cpu: 100m, memory: 64Mi}}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: probe-scratch}
+spec:
+  containers:
+  - name: scratch
+    image: busybox:1.36

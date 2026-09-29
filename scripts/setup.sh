@@ -30,7 +30,8 @@ if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
   for fixture in configmap/lab-info deployment.apps/web service/web pod/toolbox \
                  serviceaccount/relay-identity role.rbac.authorization.k8s.io/relay-reader \
                  rolebinding.rbac.authorization.k8s.io/relay-reader \
-                 deployment.apps/broken-image deployment.apps/broken-ready pod/unschedulable service/broken-service \
+                 deployment.apps/sable-view deployment.apps/sable-probe pod/sable-worker service/sable-route \
+                 pod/dns-stray deployment.apps/log-churn \
                  deployment.apps/ember-api deployment.apps/ember-release deployment.apps/ember-recovery \
                  service/ember-ledger statefulset.apps/ember-ledger deployment.apps/ember-placement \
                  deployment.apps/ember-autoscale deployment.apps/estuary-api service/estuary-front \
@@ -74,6 +75,14 @@ if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
     kubectl label --local -f - cka-lab.io/owner=cka-talos-practice cka-lab.io/prefix="$PREFIX" --overwrite -o yaml |
     kubectl apply -f - >/dev/null
 fi
+# Pod scheduling and DNS policy are immutable. Replace only these owned seed Pods on
+# rerun so a completed exercise can be reset without an immutable-field apply error.
+for seed in sable-worker dns-stray; do
+  if kubectl get pod "$seed" -n "$NAMESPACE" >/dev/null 2>&1; then
+    [[ "$(kubectl get pod "$seed" -n "$NAMESPACE" -o jsonpath='{.metadata.labels.cka-lab\.io/owner}')" == cka-talos-practice ]] || die "unowned seed Pod: $seed"
+    kubectl delete pod "$seed" -n "$NAMESPACE" --wait=true >/dev/null
+  fi
+done
 render_fixture "$ROOT/fixtures/base/lab.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/troubleshooting/broken.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/base/workloads.yaml" | kubectl apply -f - >/dev/null
@@ -84,7 +93,7 @@ kubectl rollout status deployment/ember-recovery -n "$NAMESPACE" --timeout=90s >
 kubectl set image deployment/ember-recovery api=nginx:no-such-tag-cka-practice -n "$NAMESPACE" >/dev/null
 
 metrics=false; networkpolicy=false; ingress=false; gateway=false; storageclass=false; expandable=false; helm=false; talosctl=false
-kubectl get --raw /apis/metrics.k8s.io/v1beta1 >/dev/null 2>&1 && kubectl top nodes >/dev/null 2>&1 && metrics=true || :
+kubectl get --raw /apis/metrics.k8s.io/v1beta1 >/dev/null 2>&1 && kubectl top nodes >/dev/null 2>&1 && kubectl top pods -n "$NAMESPACE" >/dev/null 2>&1 && metrics=true || :
 # API presence alone does not prove enforcement. Recognized CNI pods provide a conservative hint.
 if kubectl api-resources --api-group=networking.k8s.io -o name | grep -qx networkpolicies; then
   if kubectl get pods -A -o name 2>/dev/null | grep -Eiq '(cilium|calico|weave|antrea)'; then networkpolicy=true; fi
@@ -112,9 +121,11 @@ if [[ "${CKA_LAB_STORAGE_APPROVED:-false}" == true && "$selected_sc" =~ ^[a-z0-9
 fi
 command -v helm >/dev/null 2>&1 && helm=true || :
 command -v talosctl >/dev/null 2>&1 && talosctl get members -o json >/dev/null 2>&1 && talosctl=true || :
+debug=false
+[[ "$(kubectl auth can-i update pods/ephemeralcontainers -n "$NAMESPACE" 2>/dev/null)" == yes ]] && debug=true || :
 {
-  printf 'METRICS=%s\nNETWORKPOLICY=%s\nINGRESS=%s\nGATEWAY=%s\nSTORAGECLASS=%s\nEXPANDABLE=%s\nCKA_LAB_STORAGE_CLASS=%q\nHELM=%s\nTALOSCTL=%s\n' \
-    "$metrics" "$networkpolicy" "$ingress" "$gateway" "$storageclass" "$expandable" "$selected_sc" "$helm" "$talosctl"
+  printf 'METRICS=%s\nNETWORKPOLICY=%s\nINGRESS=%s\nGATEWAY=%s\nSTORAGECLASS=%s\nEXPANDABLE=%s\nCKA_LAB_STORAGE_CLASS=%q\nHELM=%s\nTALOSCTL=%s\nDEBUG=%s\n' \
+    "$metrics" "$networkpolicy" "$ingress" "$gateway" "$storageclass" "$expandable" "$selected_sc" "$helm" "$talosctl" "$debug"
 } >"$STATE_DIR/capabilities.env"
 
 log "Lab ready in namespace $NAMESPACE. Capabilities:"
