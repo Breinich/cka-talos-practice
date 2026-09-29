@@ -21,7 +21,24 @@ def rules_valid(rules, direction):
     )
 
 mode = sys.argv[1]
-if mode == "default-deny":
+if mode == "arch-role":
+    rules = spec.get("rules", obj.get("rules", []))
+    good = (len(rules) == 1 and rules[0].get("apiGroups") == [""]
+            and rules[0].get("resources") == ["pods"]
+            and set(rules[0].get("verbs", [])) == {"get", "list", "watch"}
+            and obj.get("metadata", {}).get("labels", {}).get("cka-lab.io/owner") == "cka-talos-practice")
+elif mode == "arch-binding":
+    good = (obj.get("roleRef") == {"apiGroup": "rbac.authorization.k8s.io", "kind": "Role", "name": "relay-reader"}
+            and obj.get("subjects") == [{"kind": "ServiceAccount", "name": "relay-identity", "namespace": obj.get("metadata", {}).get("namespace")}]
+            and obj.get("metadata", {}).get("labels", {}).get("cka-lab.io/owner") == "cka-talos-practice")
+elif mode == "arch-pod":
+    containers = spec.get("containers", [])
+    good = (spec.get("serviceAccountName") == "relay-identity"
+            and spec.get("automountServiceAccountToken") is False
+            and len(containers) == 1 and containers[0].get("image") == "busybox:1.36"
+            and containers[0].get("command", [None])[0] in ("sleep", "sh")
+            and obj.get("metadata", {}).get("labels", {}).get("cka-lab.io/owner") == "cka-talos-practice")
+elif mode == "default-deny":
     good = (set(spec.get("policyTypes", [])) == {"Ingress", "Egress"}
             and spec.get("podSelector") == {}
             and not spec.get("ingress") and not spec.get("egress"))

@@ -1,22 +1,22 @@
 id	domain	points	mode	requires	title
-A01	architecture	2	live	core	Discover API resources and cluster version
-A02	architecture	3	live	core	Build and use a minimal kubeconfig
-A03	architecture	3	live	core	Create namespace Role and RoleBinding
-A04	architecture	2	live	core	Configure a ServiceAccount
-A05	architecture	2	live	core	Test RBAC authorization
-A06	architecture	2	live	core	Inspect CRDs and API discovery
-A07	architecture	2	simulation	helm	Render and inspect a Helm release
-A08	architecture	2	live	core	Build a Kustomize overlay
-A09	architecture	2	read-only	core	Inspect control-plane components
-A10	architecture	2	read-only	talosctl	Inspect Talos machine and service health
-A11	architecture	3	simulation	core	Plan an etcd snapshot and restore
-A12	architecture	3	disposable-kubeadm	kubeadm	Practice kubeadm init and worker join
-A13	architecture	3	disposable-kubeadm	kubeadm	Practice a Kubernetes version upgrade
-A14	architecture	2	read-only	core	Inspect certificate lifetimes
-A15	architecture	2	read-only	core	Inspect admission and Pod Security controls
-A16	architecture	2	simulation	core	Model an operator lifecycle safely
-A17	architecture	3	simulation	core	Plan a highly available Talos control plane
-A18	architecture	2	simulation	core	Render a cluster component with Helm or Kustomize
+A01	architecture	2	live	core	Read the live discovery surface
+A02	architecture	3	live	core	Scope a temporary client identity
+A03	architecture	3	live	core	Repair a restricted reader
+A04	architecture	2	live	core	Run a non-API consumer without a token
+A05	architecture	2	live	core	Check both sides of the permission boundary
+A06	architecture	2	live	core	Classify an uninstalled API extension
+A07	architecture	2	simulation	helm	Render a local release without installing it
+A08	architecture	2	live	core	Promote a local overlay into the lab
+A09	architecture	2	read-only	core	Locate control-plane services without host access
+A10	architecture	2	read-only	talosctl	Triage Talos services without repair
+A11	architecture	3	simulation	core	Decide whether restore is permitted
+A12	architecture	3	disposable-kubeadm	kubeadm	Bootstrap a disposable cluster only
+A13	architecture	3	disposable-kubeadm	kubeadm	Upgrade an isolated kubeadm pair only
+A14	architecture	2	read-only	core	Check the API serving certificate
+A15	architecture	2	read-only	core	Inventory admission without changing it
+A16	architecture	2	simulation	core	Model an operator install offline
+A17	architecture	3	simulation	core	Assess one failure before expanding HA
+A18	architecture	2	simulation	core	Render a component overlay offline
 W01	workloads	2	live	core	Create a Deployment with resources
 W02	workloads	2	live	core	Perform and inspect a rolling update
 W03	workloads	2	live	core	Roll back a Deployment

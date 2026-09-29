@@ -28,6 +28,8 @@ if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
   refuse_storage_cleanup
   # Do not silently adopt or overwrite an unrelated object with a fixture name.
   for fixture in configmap/lab-info deployment.apps/web service/web pod/toolbox \
+                 serviceaccount/relay-identity role.rbac.authorization.k8s.io/relay-reader \
+                 rolebinding.rbac.authorization.k8s.io/relay-reader \
                  deployment.apps/broken-image deployment.apps/broken-ready pod/unschedulable service/broken-service; do
     if kubectl get "$fixture" -n "$NAMESPACE" >/dev/null 2>&1; then
       owner="$(kubectl get "$fixture" -n "$NAMESPACE" -o jsonpath='{.metadata.labels.cka-lab\.io/owner}')"
@@ -91,7 +93,7 @@ default_sc="$(kubectl get storageclass -o jsonpath='{range .items[?(@.metadata.a
 [[ -n "$default_sc" ]] && storageclass=true || :
 [[ -n "$default_sc" && "$(kubectl get storageclass "$default_sc" -o jsonpath='{.allowVolumeExpansion}' 2>/dev/null)" == true ]] && expandable=true || :
 command -v helm >/dev/null 2>&1 && helm=true || :
-command -v talosctl >/dev/null 2>&1 && talosctl=true || :
+command -v talosctl >/dev/null 2>&1 && talosctl get members -o json >/dev/null 2>&1 && talosctl=true || :
 {
   printf 'METRICS=%s\nNETWORKPOLICY=%s\nINGRESS=%s\nGATEWAY=%s\nSTORAGECLASS=%s\nEXPANDABLE=%s\nHELM=%s\nTALOSCTL=%s\n' \
     "$metrics" "$networkpolicy" "$ingress" "$gateway" "$storageclass" "$expandable" "$helm" "$talosctl"

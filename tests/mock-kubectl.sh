@@ -44,7 +44,7 @@ case "$*" in
   'get '*'-o name'*) exit;;
   'get ingressclass'*|'get storageclass'*|'get pods -A'* ) exit 1;;
   'get '* ) exit 1;;
-  apply*) [[ "$MOCK_MODE" == restore || "$MOCK_MODE" == setup ]] || exit 1; exit;;
+  apply*) [[ "$MOCK_MODE" == restore || "$MOCK_MODE" == setup ]] || exit 1; if [[ "$*" == *"-f -"* ]]; then cat >/dev/null; fi; exit;;
   delete*) [[ "$MOCK_MODE" == restore ]] || exit 1; exit;;
   *) exit 1;;
 esac

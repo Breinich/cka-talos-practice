@@ -6,7 +6,7 @@ A namespace-scoped, self-scoring practice bank for the five current CKA domains,
 
 ## Prerequisites
 
-Required for setup/scoring: Bash 4+, `kubectl`, Python 3, `sed`, `grep`, `awk`, and a reachable Kubernetes API. `make test` additionally needs PyYAML for offline fixture parsing. Your identity needs permissions for namespaced exercise resources, read-only discovery of namespaced APIs and PVs, and read access to lab-owned storage; cluster-scoped PV/RBAC installation is simulation-only. Optional: `talosctl` for read-only Talos tasks and `helm` for local rendering. Metrics Server, a NetworkPolicy-enforcing CNI, an Ingress controller, Gateway API, and dynamic storage are detected, not assumed. Helm and Gateway API are known to be absent initially, and no default StorageClass is assumed.
+Required for setup/scoring: Bash 4+, `kubectl`, Python 3, `sed`, `grep`, `awk`, and a reachable Kubernetes API. `make test` and architecture offline scoring additionally need PyYAML for manifest parsing. Your identity needs permissions for namespaced exercise resources, read-only discovery of namespaced APIs and PVs, and read access to lab-owned storage; cluster-scoped PV/RBAC installation is simulation-only. Optional: configured `talosctl` for read-only Talos tasks and `helm` for local rendering. A14 uses Python TLS with the current cluster CA, not private keys. Metrics Server, a NetworkPolicy-enforcing CNI, an Ingress controller, Gateway API, and dynamic storage are detected, not assumed. Helm and Gateway API are known to be absent initially, and no default StorageClass is assumed.
 
 Before setup:
 
@@ -54,7 +54,7 @@ Override scope with `CKA_LAB_PREFIX` and `CKA_LAB_NAMESPACE` or setup flags. The
 
 Task weights are in `metadata/tasks.tsv` (128 total configured points before capability exclusions). Each task has two independently checked criteria; partial criteria receive floor-rounded points (a one-point task can be `PARTIAL` at 0/1). `PASS`, `PARTIAL`, and `FAIL` apply only to supported tasks. `SKIP` means a detected optional API/controller/capability is unavailable. `UNSUPPORTED` means the exercise belongs in a disposable kubeadm environment or a required local tool is missing. Skipped/unsupported points are excluded from the denominator. A nonzero scorer exit means not all applicable points were earned; JSON remains available for automation.
 
-The scorer checks end state or sanitized evidence; it never repairs resources and does not emit full commands or solutions. Some evidence checks establish that the requested diagnostic concepts were recorded, not that every conclusion is semantically correct—review those manually against `answers/`.
+The architecture scorer verifies live RBAC, identity, and render structure, and compares synthetic incident answers to bundled input cases; a few Talos observations still require human review. The scorer checks end state or sanitized evidence; it never repairs resources and does not emit full commands or solutions. Some evidence checks establish that the requested diagnostic concepts were recorded, not that every conclusion is semantically correct—review those manually against `answers/`.
 
 ## Reset, teardown, and restore
 

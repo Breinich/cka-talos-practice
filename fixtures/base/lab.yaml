@@ -52,3 +52,34 @@ spec:
     resources:
       requests: {cpu: 5m, memory: 8Mi}
       limits: {cpu: 50m, memory: 32Mi}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: relay-identity
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: relay-reader
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+rules:
+- apiGroups: ['']
+  resources: [pods]
+  verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: relay-reader
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+subjects:
+- kind: ServiceAccount
+  name: relay-identity
+  namespace: __NAMESPACE__
+roleRef: {kind: Role, name: relay-reader, apiGroup: rbac.authorization.k8s.io}

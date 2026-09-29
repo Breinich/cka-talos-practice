@@ -61,22 +61,22 @@ validate_task() {
     simulation:helm) [[ "$HELM" == true ]] || { skip "$id" UNSUPPORTED "$max"; return; };;
   esac
   case "$id" in
-    A01) begin "$id" "$max"; check evidence_has A01 'server|version'; check evidence_has A01 'api|resource'; finish;;
-    A02) begin "$id" "$max"; check test -s "$EVIDENCE/A02.kubeconfig"; check kubectl --kubeconfig "$EVIDENCE/A02.kubeconfig" auth can-i get pods -n "$NAMESPACE"; finish;;
-    A03) begin "$id" "$max"; check bash -c "[[ \$(getj role pod-reader '{.rules[*].resources}') == *pods* && \$(getj role pod-reader '{.rules[*].verbs}') == *get* ]]"; check bash -c "kubectl auth can-i get pods -n '$NAMESPACE' --as=system:serviceaccount:'$NAMESPACE':exam-sa | grep -qx yes"; finish;;
-    A04) begin "$id" "$max"; check kubectl get sa exam-sa -n "$NAMESPACE"; check bash -c "[[ \$(getj pod sa-consumer '{.spec.serviceAccountName}') == exam-sa && \$(getj pod sa-consumer '{.spec.automountServiceAccountToken}') == false ]]"; finish;;
-    A05) begin "$id" "$max"; check evidence_has A05 'yes'; check evidence_has A05 'no'; finish;;
-    A06) begin "$id" "$max"; check evidence_has A06 'customresourcedefinition|crd'; check evidence_has A06 'api'; finish;;
-    A07) begin "$id" "$max"; check test -s "$EVIDENCE/A07-rendered.yaml"; check grep -Eq '^kind: (Deployment|StatefulSet|DaemonSet)' "$EVIDENCE/A07-rendered.yaml"; finish;;
-    A08) begin "$id" "$max"; check kubectl get deploy exam-kustom-app -n "$NAMESPACE"; check bash -c "[[ \$(getj deploy exam-kustom-app '{.spec.replicas}') == 2 ]]"; finish;;
-    A09) begin "$id" "$max"; check evidence_has A09 'kube-apiserver'; check evidence_has A09 'etcd|scheduler|controller'; finish;;
-    A10) begin "$id" "$max"; check evidence_has A10 'healthy|running'; check evidence_has A10 'kubelet|containerd'; finish;;
-    A11) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A11.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'snapshot|backup' \"\$f\" && grep -Eiq 'encrypt|protect|secure' \"\$f\" && grep -Eiq 'verify|integrity|status' \"\$f\""; check bash -c "f='$EVIDENCE/A11.txt'; grep -Eiq 'restore' \"\$f\" && grep -Eiq 'quorum|member|endpoint' \"\$f\" && grep -Eiq 'precondition|maintenance|rollback' \"\$f\""; finish;;
-    A14) begin "$id" "$max"; check evidence_has A14 'notafter|expire|valid'; check evidence_has A14 'certificate|cert'; finish;;
-    A15) begin "$id" "$max"; check evidence_has A15 'admission|webhook'; check evidence_has A15 'pod.?security|enforce|audit|warn'; finish;;
-    A16) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A16-operator.yaml'; grep -Eq '^kind: CustomResourceDefinition$' \"\$f\" && grep -Eq '^kind: Deployment$' \"\$f\" && grep -Eq '^kind: ServiceAccount$' \"\$f\""; check bash -c "f='$EVIDENCE/A16-operator.yaml'; t='$EVIDENCE/A16.txt'; grep -Eq '^kind: (ClusterRole|Role)$' \"\$f\" && grep -Eq '^kind: (ClusterRoleBinding|RoleBinding)$' \"\$f\" && [[ -s \"\$t\" ]] && grep -Eiq 'upgrade|rollback' \"\$t\" && grep -Eiq 'remov|uninstall' \"\$t\""; finish;;
-    A17) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A17.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'three|3|odd' \"\$f\" && grep -Eiq 'endpoint|load.?balanc' \"\$f\" && grep -Eiq 'failure.?domain|zone' \"\$f\""; check bash -c "f='$EVIDENCE/A17.txt'; grep -Eiq 'quorum|etcd' \"\$f\" && grep -Eiq 'certificate|SAN' \"\$f\" && grep -Eiq 'talos|machine.?config|patch' \"\$f\" && grep -Eiq 'validat|health' \"\$f\" && grep -Eiq 'rollback|revert' \"\$f\""; finish;;
-    A18) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A18-component.yaml'; grep -Eq '^kind: (Deployment|DaemonSet)$' \"\$f\" && grep -Eq 'namespace:[[:space:]]*(kube-system|$NAMESPACE)' \"\$f\""; check bash -c "f='$EVIDENCE/A18.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'helm template|kubectl kustomize' \"\$f\" && grep -Eiq 'values|overlay|patch' \"\$f\""; finish;;
+    A01) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A02) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A06) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A07) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A08) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A09) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A10) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A11) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A14) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A15) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A16) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A17) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A18) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
+    A03) begin "$id" "$max"; check resource_check role relay-reader arch-role; check resource_check rolebinding relay-reader arch-binding; finish;;
+    A04) begin "$id" "$max"; check resource_check pod relay-consumer arch-pod; check bash -c "[[ \$(getj pod relay-consumer '{.status.phase}') == Running ]]"; finish;;
+    A05) begin "$id" "$max"; check bash -c "[[ \$(kubectl auth can-i list pods -n '$NAMESPACE' --as=system:serviceaccount:'$NAMESPACE':relay-identity) == yes ]]"; check bash -c "[[ \$(kubectl auth can-i delete pods -n '$NAMESPACE' --as=system:serviceaccount:'$NAMESPACE':relay-identity) == no ]]"; finish;;
     W01) begin "$id" "$max"; check kubectl get deploy resource-app -n "$NAMESPACE"; check bash -c "[[ -n \$(getj deploy resource-app '{.spec.template.spec.containers[0].resources.requests.cpu}') && -n \$(getj deploy resource-app '{.spec.template.spec.containers[0].resources.limits.memory}') ]]"; finish;;
     W02) begin "$id" "$max"; check bash -c "[[ \$(getj deploy rollout-app '{.spec.strategy.type}') == RollingUpdate ]]"; check bash -c "kubectl rollout status deploy/rollout-app -n '$NAMESPACE' --timeout=1s"; finish;;
     W03) begin "$id" "$max"; check bash -c "kubectl rollout history deploy/rollout-app -n '$NAMESPACE' | grep -Eq '[2-9]'"; check bash -c "kubectl rollout status deploy/rollout-app -n '$NAMESPACE' --timeout=1s"; finish;;

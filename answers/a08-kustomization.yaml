@@ -1,9 +1,12 @@
+# Example for the default scope only; substitute the active namespace and prefix.
 resources:
-- ../../fixtures/kustomize/base
+- ../base
 namespace: cka-practice
-namePrefix: exam-
-commonLabels:
-  cka-lab.io/owner: cka-talos-practice
+namePrefix: cka-practice-
+labels:
+- pairs:
+    cka-lab.io/owner: cka-talos-practice
+  includeTemplates: true
 patches:
 - target: {kind: Deployment, name: kustom-app}
   patch: |-

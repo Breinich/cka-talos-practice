@@ -62,6 +62,14 @@ for filename in glob.glob("fixtures/*/*.yaml"):
             sys.exit(f"out-of-scope document {index}: {filename}")
 print("ok: offline YAML parsing, every fixture document owned and scoped")
 PYTEST
+python3 - <<'PYTEST'
+import pathlib, yaml
+base=pathlib.Path('samples/architecture')
+for filename in ('crd.yaml','component.yaml','chart/Chart.yaml','chart/values.yaml'):
+    assert list(yaml.safe_load_all((base/filename).read_text())),filename
+assert (base/'chart/templates/deployment.yaml').is_file()
+print('ok: synthetic architecture inputs parse offline')
+PYTEST
 
 ./tests/behavior.sh
 

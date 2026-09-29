@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-relay
+  namespace: {{ .Release.Namespace }}
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels: {app: {{ .Release.Name }}-relay}
+  template:
+    metadata:
+      labels: {app: {{ .Release.Name }}-relay}
+    spec:
+      containers:
+      - name: relay
+        image: {{ .Values.image }}
+        resources:
+          requests: {cpu: 5m, memory: 8Mi}

@@ -12,24 +12,24 @@ Tasks are organized by the five current CKA pillars. Each task file contains its
 
 | ID | Task |
 |---|---|
-| [A01](tasks/architecture/A01.md) | Discover API resources and cluster version |
-| [A02](tasks/architecture/A02.md) | Build and use a minimal kubeconfig |
-| [A03](tasks/architecture/A03.md) | Create namespace Role and RoleBinding |
-| [A04](tasks/architecture/A04.md) | Configure a ServiceAccount |
-| [A05](tasks/architecture/A05.md) | Test RBAC authorization |
-| [A06](tasks/architecture/A06.md) | Inspect CRDs and API discovery |
-| [A07](tasks/architecture/A07.md) | Render and inspect a Helm release |
-| [A08](tasks/architecture/A08.md) | Build a Kustomize overlay |
-| [A09](tasks/architecture/A09.md) | Inspect control-plane components |
-| [A10](tasks/architecture/A10.md) | Inspect Talos machine and service health |
-| [A11](tasks/architecture/A11.md) | Plan an etcd snapshot and restore |
-| [A12](tasks/architecture/A12.md) | Practice kubeadm init and worker join |
-| [A13](tasks/architecture/A13.md) | Practice a Kubernetes version upgrade |
-| [A14](tasks/architecture/A14.md) | Inspect certificate lifetimes |
-| [A15](tasks/architecture/A15.md) | Inspect admission and Pod Security controls |
-| [A16](tasks/architecture/A16.md) | Model an operator lifecycle safely |
-| [A17](tasks/architecture/A17.md) | Plan a highly available Talos control plane |
-| [A18](tasks/architecture/A18.md) | Render a cluster component with Helm or Kustomize |
+| [A01](tasks/architecture/A01.md) | Read the live discovery surface |
+| [A02](tasks/architecture/A02.md) | Scope a temporary client identity |
+| [A03](tasks/architecture/A03.md) | Repair a restricted reader |
+| [A04](tasks/architecture/A04.md) | Run a non-API consumer without a token |
+| [A05](tasks/architecture/A05.md) | Check both sides of the permission boundary |
+| [A06](tasks/architecture/A06.md) | Classify an uninstalled API extension |
+| [A07](tasks/architecture/A07.md) | Render a local release without installing it |
+| [A08](tasks/architecture/A08.md) | Promote a local overlay into the lab |
+| [A09](tasks/architecture/A09.md) | Locate control-plane services without host access |
+| [A10](tasks/architecture/A10.md) | Triage Talos services without repair |
+| [A11](tasks/architecture/A11.md) | Decide whether restore is permitted |
+| [A12](tasks/architecture/A12.md) | Bootstrap a disposable cluster only |
+| [A13](tasks/architecture/A13.md) | Upgrade an isolated kubeadm pair only |
+| [A14](tasks/architecture/A14.md) | Check the API serving certificate |
+| [A15](tasks/architecture/A15.md) | Inventory admission without changing it |
+| [A16](tasks/architecture/A16.md) | Model an operator install offline |
+| [A17](tasks/architecture/A17.md) | Assess one failure before expanding HA |
+| [A18](tasks/architecture/A18.md) | Render a component overlay offline |
 
 ## Workloads and Scheduling
 
