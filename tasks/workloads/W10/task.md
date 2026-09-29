@@ -10,27 +10,16 @@
 
 ## Scenario
 
-Metrics API availability varies. The owned `ember-autoscale` Deployment has CPU requests already seeded; no HPA is seeded. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w10}`; use `kubectl -n "$NAMESPACE"` after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w10}"`.
+Metrics API availability varies. The owned `ember-autoscale` Deployment has CPU requests already seeded; no HPA is seeded. Namespace: `${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w10}`; use after setting `NAMESPACE="${CKA_LAB_NAMESPACE:-${CKA_LAB_PREFIX:-cka-practice}-w10}".
 
 ## Task
 
-Setup copies `tasks/workloads/W10/resources/hpa/` to `.lab/W10/<namespace>/evidence/W10-overlay/`. Edit this instance's local Kustomize overlay so its rendered, owned autoscaling/v2 HPA is in the configured namespace, targets Deployment `ember-autoscale`, and uses CPU utilization 60%, min 1 and max 3. Inspect the rendered output with `kubectl kustomize`; only when metrics actually respond, apply that render in the lab namespace. Ensure the target container has CPU request `20m`; wait for AbleToScale. Do not drive artificial load.
+Setup copies `tasks/workloads/W10/resources/hpa/` to `.lab/W10/<namespace>/evidence/W10-overlay/. Edit this instance's local Kustomize overlay so its rendered, owned autoscaling/v2 HPA is in the configured namespace, targets Deployment `ember-autoscale`, and uses CPU utilization 60%, min 1 and max 3. Inspect the rendered output with; only when metrics actually respond, apply that render in the lab namespace. Ensure the target container has CPU request `20m`; wait for AbleToScale. Do not drive artificial load.
 
 ## Expected state
 
 The local Kustomize render exactly matches the live owned HPA target, bounds and utilization; the HPA reports AbleToScale and its target has the expected request. When metrics are absent this task SKIPs.
 
-## Safety boundary
+## Scope and constraints
 
 Work only in the configured lab namespace; label new live objects `cka-lab.io/owner=cka-talos-practice` and `cka-lab.io/task=W10` (including Pod templates). Do not modify nodes, controllers, cluster-scoped objects, PVCs or PVs.
-
-## Validation
-
-```bash
-./tasks/workloads/W10/score.sh
-./tasks/workloads/W10/score.sh --json
-```
-
-Two independent end-state criteria are scored. The validator does not repair resources or publish a solution.
-
-From any directory, run `./tasks/workloads/W10/setup.sh` (relative to repository root), then use its `score.sh` and `teardown.sh`. Export `CKA_LAB_NAMESPACE` if using a custom namespace. Each task has an independent state/evidence directory; `--yes` confirms context only.

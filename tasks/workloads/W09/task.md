@@ -20,17 +20,6 @@ Inspect that inventory and write `${CKA_LAB_STATE_DIR:-.lab}/evidence/W09-pod.ya
 
 The descriptor targets the intended synthetic hostname and image; the precise Equal/NoSchedule toleration and small requests are present without a wildcard toleration.
 
-## Safety boundary
+## Scope and constraints
 
 This task is local-only. Do not apply the descriptor or alter real nodes.
-
-## Validation
-
-```bash
-./tasks/workloads/W09/score.sh
-./tasks/workloads/W09/score.sh --json
-```
-
-Two independent end-state criteria are scored. The validator does not repair resources or publish a solution.
-
-From any directory, run `./tasks/workloads/W09/setup.sh` (relative to repository root), then use its `score.sh` and `teardown.sh`. Export `CKA_LAB_NAMESPACE` if using a custom namespace. Each task has an independent state/evidence directory; `--yes` confirms context only.

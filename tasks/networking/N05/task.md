@@ -14,19 +14,8 @@ The `toolbox` client must be isolated for egress, while still resolving DNS in `
 
 ## Expected state
 
-Outcome: deny egress for that client without isolating unrelated Pods; permit only UDP/53 to namespace `kube-system` and TCP/80 to owned Pods labeled `app=estuary-api` in the same namespace. The scorer checks both policy structure and both precise egress flows offline; it cannot assert CNI enforcement.
+Outcome: deny egress for that client without isolating unrelated Pods; permit only UDP/53 to namespace `kube-system` and TCP/80 to owned Pods labeled `app=estuary-api` in the same namespace.
 
-## Safety boundary
+## Scope and constraints
 
 Local artifact only under `.lab/N05/<namespace>/evidence/`; do not apply it or alter cluster/system resources. The validator reads it offline.
-
-## Validation
-
-```bash
-./tasks/networking/N05/score.sh
-./tasks/networking/N05/score.sh --json
-```
-
-Two independent criteria are scored without printing a solution. Solutions are not included in prompts.
-
-From any directory, run `./tasks/networking/N05/setup.sh` (relative to repository root), then use its `score.sh` and `teardown.sh`. Export `CKA_LAB_NAMESPACE` if using a custom namespace. Each task has an independent state/evidence directory; `--yes` confirms context only.

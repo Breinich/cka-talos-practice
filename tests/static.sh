@@ -22,7 +22,9 @@ while IFS=$'\t' read -r id domain points mode requires title; do
   grep -Fq "| Mode | \`$mode\` |" "$task_file" || { echo "task mode mismatch: $id" >&2; missing=1; }
   grep -Fq "| Capability | \`$requires\` |" "$task_file" || { echo "task capability mismatch: $id" >&2; missing=1; }
   grep -Fq "| Points | $points |" "$task_file" || { echo "task points mismatch: $id" >&2; missing=1; }
-  grep -Fq "./tasks/$domain/$id/score.sh" "$task_file" || { echo "task validation command missing: $id" >&2; missing=1; }
+  tutorial_file="tasks/$domain/$id/tutorial.md"
+  [[ -f "$tutorial_file" ]] || { echo "missing tutorial: $tutorial_file" >&2; missing=1; }
+  grep -Fq "tasks/$domain/$id/tutorial.md" SOLUTIONS.md || { echo "tutorial index link missing: $id" >&2; missing=1; }
   grep -Fq "($task_file)" TASKS.md || { echo "task index link missing: $id" >&2; missing=1; }
   if ! grep -Eq "^[[:space:]]+$id\)|\|$id\)|\|$id\||^[[:space:]]+$id\|" scripts/validate.sh && [[ "$mode" != disposable-kubeadm ]]; then
     echo "missing validator: $id" >&2; missing=1
@@ -34,10 +36,30 @@ while read -r id; do awk -F '\t' -v id="$id" 'NR>1 && $1==id {ok=1} END{exit !ok
 while read -r task_file; do
   id="$(basename "$(dirname "$task_file")")"; domain="$(basename "$(dirname "$(dirname "$task_file")")")"
   awk -F '\t' -v id="$id" -v domain="$domain" 'NR>1 && $1==id && $2==domain {ok=1} END{exit !ok}' metadata/tasks.tsv || fail "orphan or misplaced task file $task_file"
-done < <(find tasks -type f -name '*.md' | sort)
-[[ "$(find tasks -type f -name '*.md' | wc -l)" -eq "$(($(wc -l < metadata/tasks.tsv)-1))" ]] || fail "task file count mismatch"
+done < <(find tasks -type f -name 'task.md' | sort)
+task_count="$(find tasks -type f -name task.md | wc -l)"
+tutorial_count="$(find tasks -type f -name tutorial.md | wc -l)"
+expected_count="$(($(wc -l < metadata/tasks.tsv)-1))"
+[[ "$task_count" -eq "$expected_count" ]] || fail "task prompt count mismatch"
+[[ "$tutorial_count" -eq "$expected_count" ]] || fail "tutorial count mismatch"
+[[ "$(find tasks -type f -name '*.md' | wc -l)" -eq "$((expected_count * 2))" ]] || fail "task/tutorial markdown count mismatch"
+python3 - <<'PYDOCS' || fail "task prompt contains solution material or lacks matching tutorial"
+import csv, pathlib, re, sys
+rows=list(csv.DictReader(open('metadata/tasks.tsv'), delimiter='\t'))
+for row in rows:
+    base=pathlib.Path('tasks')/row['domain']/row['id']
+    prompt=(base/'task.md').read_text()
+    tutorial=base/'tutorial.md'
+    if not tutorial.is_file(): sys.exit(f"missing tutorial: {base}")
+    if re.search(r'^\s*```', prompt, re.M): sys.exit(f"fenced code in {base/'task.md'}")
+    if re.search(r'\b(?:kubectl|helm|talosctl|kubeadm|crictl|openssl|nslookup)\s+(?:get|describe|apply|create|delete|edit|patch|rollout|top|debug|template|upgrade|init|join|token|version|api-resources|auth|logs|exec|s-client|health|services|service)\b', prompt):
+        sys.exit(f"solver command in {base/'task.md'}")
+    if re.search(r'\b(?:sh\s+-c|sleep\s+7d|echo\s+[^\n`]+|test\s+-f)\b', prompt):
+        sys.exit(f"shell solver snippet in {base/'task.md'}")
+PYDOCS
 total_points="$(awk -F '\t' 'NR>1 {sum+=$3} END {print sum}' metadata/tasks.tsv)"
 grep -Fq "($total_points total configured points" README.md || fail "README score total mismatch"
+grep -Fq 'SOLUTIONS.md' README.md || fail "README solution tutorial index missing"
 printf 'ok: %s task files, IDs, index links, score total, and validator metadata agree\n' "$(($(wc -l < metadata/tasks.tsv)-1))"
 
 # Parse every YAML document offline. A matching label in another document is not enough.
