@@ -89,6 +89,16 @@ for row in rows:
                     else ('kubeadm upgrade apply', 'apt-mark', 'kubectl drain', 'kubeadm upgrade node', 'kubectl uncordon', 'snapshot'))
         if not all(term in content for term in required):
             sys.exit(f"kubeadm guide missing essential lifecycle steps: {task}")
+        kubeconfig_copy='sudo install -o "$(id -u)" -g "$(id -g)" -m 0600 /etc/kubernetes/admin.conf "$HOME/.kube/config"'.lower()
+        if kubeconfig_copy not in content or 'export kubeconfig="$home/.kube/config"' not in content:
+            sys.exit(f"kubeadm guide does not create operator-readable kubeconfig: {task}")
+        if 'sensitive' not in content or 'repository' not in content or 'homelab' not in content:
+            sys.exit(f"kubeadm guide does not protect kubeconfig credentials: {task}")
+        if re.search(r'KUBECONFIG=/etc/kubernetes/admin.conf\s+kubectl|kubectl[^\n]*--kubeconfig(?:=|\s+)/etc/kubernetes/admin.conf', content):
+            sys.exit(f"non-root kubectl points at root-only admin.conf: {task}")
+        for line in content.splitlines():
+            if '/etc/kubernetes/admin.conf' in line and 'sudo install -o' not in line:
+                sys.exit(f"root-only admin.conf used outside ownership-adjusted copy: {task}")
     else:
         if 'authorized' not in content or 'unrelated' not in content or 'unique namespace' not in content:
             sys.exit(f"tutorial lacks scoped-authorization boundary: {task}")

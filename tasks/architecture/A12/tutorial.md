@@ -10,7 +10,7 @@ The procedure below is hands-on only on snapshot-backed Ubuntu/Debian VMs named 
 
 ## External disposable-VM workflow
 
-This task is unsupported on Talos and does not use the repository cluster. Run commands only inside a fresh, isolated Ubuntu/Debian kubeadm VM console/SSH session: first `cp-sandbox`, later `worker-sandbox`. Confirm `hostname` and private VM IP against your disposable lab inventory. Take a snapshot of both VMs first. If a terminal is on Talos, a Proxmox-managed Talos node, or the homelab host, stop. Do not copy this VM’s kubeconfig to the host or reuse the homelab kubeconfig.
+This task is unsupported on Talos and does not use the repository cluster. Run commands only inside a fresh, isolated Ubuntu/Debian kubeadm VM console/SSH session: first `cp-sandbox`, later `worker-sandbox`. Confirm `hostname` and private VM IP against your disposable lab inventory. Take a snapshot of both VMs first. If a terminal is on Talos, a Proxmox-managed Talos node, or the homelab host, stop. The user-owned `~/.kube/config` is a sensitive admin credential for this disposable VM only: never copy it to the repository, a host, or the homelab. Do not reuse the homelab kubeconfig.
 
 ### A12: bootstrap the pair
 
@@ -43,7 +43,7 @@ sudo kubeadm init --kubernetes-version "$K8S_VERSION" \\
   --control-plane-endpoint="$CP_VM_IP:6443" \\
   --pod-network-cidr=10.244.0.0/16
 install -d -m 0700 "$HOME/.kube"
-sudo install -m 0600 /etc/kubernetes/admin.conf "$HOME/.kube/config"
+sudo install -o "$(id -u)" -g "$(id -g)" -m 0600 /etc/kubernetes/admin.conf "$HOME/.kube/config"
 export KUBECONFIG="$HOME/.kube/config"
 ```
 
