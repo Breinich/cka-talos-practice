@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estuary-api
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice, cka-lab.io/task: N01}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: estuary-api}}
+  template:
+    metadata: {labels: {app: estuary-api, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.27-alpine
+        ports: [{name: http, containerPort: 80}]
+        resources: {requests: {cpu: 5m, memory: 8Mi}, limits: {cpu: 50m, memory: 32Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estuary-front
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice, cka-lab.io/task: N01}
+spec:
+  selector: {app: estuary-absent}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estuary-catalog
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice, cka-lab.io/task: N03}
+spec:
+  selector: {app: estuary-absent}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estuary-port
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice, cka-lab.io/task: N08}
+spec:
+  selector: {app: estuary-api, cka-lab.io/owner: cka-talos-practice}
+  ports: [{name: http, port: 8080, targetPort: 81}]

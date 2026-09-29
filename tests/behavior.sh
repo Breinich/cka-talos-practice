@@ -20,7 +20,7 @@ PY
 }
 export MOCK_MODE=score
 printf 'port-forward\n' >"$tmp/state/evidence/N10.txt"
-assert_score N10 PARTIAL
+assert_score N10 FAIL
 printf '{"healthyMembers":2,"quorum":2,"snapshotUsable":true,"restoreAllowedNow":true,"firstAction":"restore","snapshotPath":"/secure/snapshots/cedar.db"}\n' >"$tmp/state/evidence/A11.json"
 assert_score A11 PARTIAL
 printf '{"healthyMembers":2,"quorum":2,"snapshotUsable":true,"restoreAllowedNow":false,"firstAction":"investigate-member","snapshotPath":"/secure/snapshots/cedar.db"}\n' >"$tmp/state/evidence/A11.json"
@@ -113,23 +113,27 @@ assert_score N05 FAIL
 assert_score W04 FAIL
 assert_score W05 SKIP
 assert_score W10 SKIP
-assert_score N01 PARTIAL
-assert_score N08 PARTIAL
+assert_score N01 FAIL
+assert_score N08 FAIL
 assert_score T04 PARTIAL
-assert_score N07 PARTIAL
+assert_score N07 FAIL
 export MOCK_MODE=positive
 assert_score W04 FAIL
 assert_score W05 SKIP
 assert_score W10 SKIP
-assert_score N01 PASS
-assert_score N08 PASS
+assert_score N01 FAIL
+assert_score N08 FAIL
 assert_score T04 PASS
-assert_score N07 PASS
-printf 'allow success; deny timeout\n' >"$tmp/state/evidence/N05.txt"
-assert_score N05 PASS
+assert_score N07 FAIL
+assert_score N05 FAIL
 if grep -Eq '^(apply|delete|create|label)' "$tmp/log"; then echo 'mock scorer mutated resources' >&2; exit 1; fi
-printf 'ok: mocked scorer partial, near-misses, EndpointSlice, route and positive criteria\n'
+printf 'ok: mocked legacy scorers and rejection of networking keyword-only evidence\n'
 
+export MOCK_MODE=collision-network
+if "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1; then echo 'network fixture collision accepted' >&2; exit 1; fi
+grep -q 'fixture collision with unowned service/estuary-front' "$tmp/out"
+[[ ! -f "$tmp/state/state.env" ]]
+if grep -Eq '^(apply|delete|create|label)' "$tmp/log"; then echo 'network collision mutated resources' >&2; exit 1; fi
 export MOCK_MODE=collision
 if "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1; then echo 'fixture collision accepted' >&2; exit 1; fi
 grep -q 'fixture collision' "$tmp/out"
@@ -142,6 +146,7 @@ baseline="$(sha256sum "$tmp/state/before.yaml")"
 [[ "$(sha256sum "$tmp/state/before.yaml")" == "$baseline" ]]
 grep -q 'rollout status deployment/ember-recovery' "$tmp/log"
 grep -q 'set image deployment/ember-recovery api=nginx:no-such-tag-cka-practice' "$tmp/log"
+grep -q 'get service/estuary-front -n cka-practice' "$tmp/log"
 python3 - "$tmp/state/before.yaml" <<'PY'
 import json,sys
 items=json.load(open(sys.argv[1]))['items']

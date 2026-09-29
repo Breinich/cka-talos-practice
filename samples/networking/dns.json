@@ -1,0 +1,1 @@
+{"namespace":"__NAMESPACE__","clusterDomain":"cluster.local","services":{"estuary-front":"10.96.12.21","estuary-port":"10.96.12.22"},"query":{"sourceNamespace":"__NAMESPACE__","name":"estuary-front","search":["__NAMESPACE__.svc.cluster.local","svc.cluster.local","cluster.local"],"ndots":5}}

@@ -53,17 +53,17 @@ Tasks are organized by the five current CKA pillars. Each task file contains its
 
 | ID | Task |
 |---|---|
-| [N01](tasks/networking/N01.md) | Expose a Deployment with ClusterIP |
-| [N02](tasks/networking/N02.md) | Create and test a headless Service |
-| [N03](tasks/networking/N03.md) | Inspect EndpointSlices and selectors |
-| [N04](tasks/networking/N04.md) | Validate cluster DNS |
-| [N05](tasks/networking/N05.md) | Enforce default deny and allow rules |
-| [N06](tasks/networking/N06.md) | Create an Ingress rule |
-| [N07](tasks/networking/N07.md) | Create Gateway API routing |
-| [N08](tasks/networking/N08.md) | Diagnose Service port and targetPort |
-| [N09](tasks/networking/N09.md) | Inspect CNI and kube-proxy replacement |
-| [N10](tasks/networking/N10.md) | Use port-forward for local access |
-| [N11](tasks/networking/N11.md) | Compare Service types safely |
+| [N01](tasks/networking/N01.md) | Repair the front door |
+| [N02](tasks/networking/N02.md) | Publish a headless peer list |
+| [N03](tasks/networking/N03.md) | Recover a missing catalog endpoint |
+| [N04](tasks/networking/N04.md) | Resolve a search-path incident offline |
+| [N05](tasks/networking/N05.md) | Design isolated client egress offline |
+| [N06](tasks/networking/N06.md) | Draft the legacy entrypoint offline |
+| [N07](tasks/networking/N07.md) | Translate the entrypoint into header routing |
+| [N08](tasks/networking/N08.md) | Repair an incorrect backend port |
+| [N09](tasks/networking/N09.md) | Triage a DNS timeout without editing CoreDNS |
+| [N10](tasks/networking/N10.md) | Check the repaired service through a local tunnel |
+| [N11](tasks/networking/N11.md) | Model two service exposures without applying them |
 
 ## Storage
 

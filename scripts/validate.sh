@@ -96,17 +96,11 @@ validate_task() {
     W11) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
     W12) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
     W13) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
-    N01) begin "$id" "$max"; check bash -c "[[ \$(getj svc app-service '{.spec.type}') == ClusterIP ]]"; check ready_endpoint_for app-service; finish;;
-    N02) begin "$id" "$max"; check bash -c "[[ \$(getj svc ordered-headless '{.spec.clusterIP}') == None ]]"; check evidence_has N02 'ordered-headless'; finish;;
-    N03) begin "$id" "$max"; check evidence_has N03 'endpoint|address'; check evidence_has N03 'selector|label'; finish;;
-    N04) begin "$id" "$max"; check evidence_has N04 'cluster.local|svc'; check evidence_has N04 'address|name'; finish;;
-    N05) begin "$id" "$max"; check policy_pair; check bash -c "f='$EVIDENCE/N05.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'allow|success|connected|200' \"\$f\" && grep -Eiq 'deny|timeout|blocked|failed' \"\$f\""; finish;;
-    N06) begin "$id" "$max"; check kubectl get ingress web-ingress -n "$NAMESPACE"; check bash -c "[[ -n \$(getj ingress web-ingress '{.spec.rules[0].http.paths[0].backend.service.name}') ]]"; finish;;
-    N07) begin "$id" "$max"; check bash -c "[[ -n \$(getj httproute web-route '{.spec.parentRefs[0].name}') && \$(getj httproute web-route '{.spec.rules[0].backendRefs[0].name}') == web ]]"; check resource_check httproute web-route route; finish;;
-    N08) begin "$id" "$max"; check bash -c "[[ \$(getj svc port-fixed '{.spec.ports[0].targetPort}') == http ]]"; check ready_endpoint_for port-fixed; finish;;
-    N09) begin "$id" "$max"; check evidence_has N09 'cilium|calico|flannel|antrea|cni'; check evidence_has N09 'proxy|ebpf|iptables|ipvs'; finish;;
-    N10) begin "$id" "$max"; check evidence_has N10 'port-forward'; check evidence_has N10 '200|welcome|nginx'; finish;;
-    N11) begin "$id" "$max"; check grep -Eq 'type:[[:space:]]*NodePort' "$EVIDENCE/N11-services.yaml"; check grep -Eq 'type:[[:space:]]*ExternalName' "$EVIDENCE/N11-services.yaml"; finish;;
+    N01|N02|N03|N04|N05|N06|N07|N08|N09|N10|N11)
+      begin "$id" "$max"
+      check python3 "$ROOT/scripts/check_networking.py" "$id" 1
+      check python3 "$ROOT/scripts/check_networking.py" "$id" 2
+      finish;;
     S01) begin "$id" "$max"; check bash -c "[[ -n \$(getj pod scratch-app '{.spec.volumes[0].emptyDir}') ]]"; check bash -c "[[ -n \$(getj pod scratch-app '{.spec.containers[0].volumeMounts[0].mountPath}') ]]"; finish;;
     S02) begin "$id" "$max"; check bash -c "grep -Eq '^kind: PersistentVolume$' '$EVIDENCE/S02-static.yaml' && grep -Eq '^kind: PersistentVolumeClaim$' '$EVIDENCE/S02-static.yaml' && grep -Eq '^kind: Pod$' '$EVIDENCE/S02-static.yaml'"; check bash -c "grep -q 'cka-lab.io/owner: cka-talos-practice' '$EVIDENCE/S02-static.yaml' && grep -q 'cka-lab.io/prefix: $PREFIX' '$EVIDENCE/S02-static.yaml' && grep -q 'volumeName:' '$EVIDENCE/S02-static.yaml'"; finish;;
     S03) begin "$id" "$max"; check kubectl get pvc dynamic-claim -n "$NAMESPACE"; check bash -c "[[ \$(getj pvc dynamic-claim '{.status.phase}') == Bound ]]"; finish;;

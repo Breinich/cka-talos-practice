@@ -13,6 +13,7 @@ case "$*" in
   'get pv '*'-o name') exit 0;;
   'get ns '*|'get namespace '*) exit;;
   'get configmap/lab-info '*) [[ "$MOCK_MODE" == collision ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
+  'get service/estuary-front '*) [[ "$MOCK_MODE" == collision-network ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
   'get '*'-o jsonpath='*)
     case "$*" in
       *'endpointslice '* ) [[ "$MOCK_MODE" == positive ]] && echo 'true|10.1.2.3'; exit;;

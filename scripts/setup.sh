@@ -33,7 +33,8 @@ if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
                  deployment.apps/broken-image deployment.apps/broken-ready pod/unschedulable service/broken-service \
                  deployment.apps/ember-api deployment.apps/ember-release deployment.apps/ember-recovery \
                  service/ember-ledger statefulset.apps/ember-ledger deployment.apps/ember-placement \
-                 deployment.apps/ember-autoscale; do
+                 deployment.apps/ember-autoscale deployment.apps/estuary-api service/estuary-front \
+                 service/estuary-catalog service/estuary-port; do
     if kubectl get "$fixture" -n "$NAMESPACE" >/dev/null 2>&1; then
       owner="$(kubectl get "$fixture" -n "$NAMESPACE" -o jsonpath='{.metadata.labels.cka-lab\.io/owner}')"
       [[ "$owner" == cka-talos-practice ]] || die "fixture collision with unowned $fixture in $NAMESPACE"
@@ -76,6 +77,7 @@ fi
 render_fixture "$ROOT/fixtures/base/lab.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/troubleshooting/broken.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/base/workloads.yaml" | kubectl apply -f - >/dev/null
+render_fixture "$ROOT/fixtures/base/networking.yaml" | kubectl apply -f - >/dev/null
 # Establish a real previous ReplicaSet before introducing the failed revision.
 kubectl rollout status deployment/ember-recovery -n "$NAMESPACE" --timeout=90s >/dev/null || die "ember-recovery baseline not ready; no bad revision seeded"
 kubectl set image deployment/ember-recovery api=nginx:no-such-tag-cka-practice -n "$NAMESPACE" >/dev/null

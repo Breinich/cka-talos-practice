@@ -30,17 +30,17 @@ W10	workloads	2	conditional	metrics	Configure an HPA
 W11	workloads	2	live	core	Use probes and security context
 W12	workloads	2	live	core	Use init and sidecar containers
 W13	workloads	2	live	core	Protect availability during disruptions
-N01	networking	2	live	core	Expose a Deployment with ClusterIP
-N02	networking	2	live	core	Create and test a headless Service
-N03	networking	2	live	core	Inspect EndpointSlices and selectors
-N04	networking	2	live	core	Validate cluster DNS
-N05	networking	3	conditional	networkpolicy	Enforce default deny and allow rules
-N06	networking	2	conditional	ingress	Create an Ingress rule
-N07	networking	2	conditional	gateway	Create Gateway API routing
-N08	networking	2	live	core	Diagnose Service port and targetPort
-N09	networking	2	read-only	core	Inspect CNI and kube-proxy replacement
-N10	networking	1	live	core	Use port-forward for local access
-N11	networking	2	simulation	core	Compare Service types safely
+N01	networking	2	live	core	Repair the front door
+N02	networking	2	live	core	Publish a headless peer list
+N03	networking	2	live	core	Recover a missing catalog endpoint
+N04	networking	2	simulation	core	Resolve a search-path incident offline
+N05	networking	3	simulation	core	Design isolated client egress offline
+N06	networking	2	simulation	core	Draft the legacy entrypoint offline
+N07	networking	2	simulation	core	Translate the entrypoint into header routing
+N08	networking	2	live	core	Repair an incorrect backend port
+N09	networking	2	simulation	core	Triage a DNS timeout without editing CoreDNS
+N10	networking	1	live	core	Check the repaired service through a local tunnel
+N11	networking	2	simulation	core	Model two service exposures without applying them
 S01	storage	2	live	core	Create and mount emptyDir
 S02	storage	3	simulation	core	Model a static PV and PVC safely
 S03	storage	2	conditional	storageclass	Provision a dynamic PVC

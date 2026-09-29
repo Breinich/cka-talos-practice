@@ -54,7 +54,7 @@ Override scope with `CKA_LAB_PREFIX` and `CKA_LAB_NAMESPACE` or setup flags. The
 
 Task weights are in `metadata/tasks.tsv` (128 total configured points before capability exclusions). Each task has two independently checked criteria; partial criteria receive floor-rounded points (a one-point task can be `PARTIAL` at 0/1). `PASS`, `PARTIAL`, and `FAIL` apply only to supported tasks. `SKIP` means a detected optional API/controller/capability is unavailable. `UNSUPPORTED` means the exercise belongs in a disposable kubeadm environment or a required local tool is missing. Skipped/unsupported points are excluded from the denominator. A nonzero scorer exit means not all applicable points were earned; JSON remains available for automation.
 
-The architecture scorer verifies live RBAC, identity, and render structure, and compares synthetic incident answers to bundled input cases; a few Talos observations still require human review. The scorer checks end state or sanitized evidence; it never repairs resources and does not emit full commands or solutions. Some evidence checks establish that the requested diagnostic concepts were recorded, not that every conclusion is semantically correct—review those manually against `answers/`.
+The architecture scorer verifies live RBAC, identity, and render structure, and compares synthetic incident answers to bundled input cases; a few Talos observations still require human review. Networking repairs N01/N03/N08 use owned, initially miswired Services and ready EndpointSlice checks; N04–N07/N09/N11 are offline simulations that do not require NetworkPolicy enforcement, installed Ingress/Gateway controllers or CRDs, or changes to CoreDNS. N10 checks the saved HTTP result against a live repaired endpoint, but its local port-forward transcript still requires human review. The scorer checks end state or sanitized evidence; it never repairs resources and does not emit full commands or solutions. Some evidence checks establish that the requested diagnostic concepts were recorded, not that every conclusion is semantically correct—review those manually against `answers/`.
 
 ## Reset, teardown, and restore
 
@@ -72,7 +72,7 @@ Normally the namespace did not exist, so restore is equivalent to safe teardown.
 |---|---:|---:|---|
 | Cluster Architecture, Installation & Configuration | A01–A18 | 18 | API discovery, kubeconfig, RBAC, ServiceAccounts, CRD inspection/offline operator model, Helm/Kustomize offline component renders, admission, HA control-plane design, Talos, etcd, certificates, kubeadm install/join/upgrade |
 | Workloads & Scheduling | W01–W13 | 13 | resources, rollout/rollback, Jobs/CronJobs, DaemonSets, StatefulSets, configuration, affinity, taints, HPA, probes/security, init/sidecars, disruption budgets |
-| Services & Networking | N01–N11 | 11 | Services, DNS, EndpointSlices, policies, Ingress, Gateway API, Service types, CNI/service routing, port-forward |
+| Services & Networking | N01–N11 | 11 | seeded Service/EndpointSlice faults, offline DNS/CoreDNS and egress policy cases, Ingress-to-HTTPRoute conversion, safe Service-type simulation, port-forward |
 | Storage | S01–S06 | 6 | ephemeral/static/dynamic volumes, PVC binding/expansion, StorageClass/CSI, access/reclaim semantics |
 | Troubleshooting | T01–T12 | 12 | applications, probes, scheduling, Services, DNS, logs/events, usage, nodes, runtime/kubelet, control plane/etcd, ephemeral debug |
 

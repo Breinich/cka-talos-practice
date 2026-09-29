@@ -24,7 +24,7 @@ while IFS=$'\t' read -r id domain points mode requires title; do
   grep -Fq "| Points | $points |" "$task_file" || { echo "task points mismatch: $id" >&2; missing=1; }
   grep -Fq "./scripts/validate.sh --task $id" "$task_file" || { echo "task validation command missing: $id" >&2; missing=1; }
   grep -Fq "($task_file)" TASKS.md || { echo "task index link missing: $id" >&2; missing=1; }
-  if ! grep -Eq "^[[:space:]]+$id\)" scripts/validate.sh && [[ "$mode" != disposable-kubeadm ]]; then
+  if ! grep -Eq "^[[:space:]]+$id\)|\|$id\)|\|$id\||^[[:space:]]+$id\|" scripts/validate.sh && [[ "$mode" != disposable-kubeadm ]]; then
     echo "missing validator: $id" >&2; missing=1
   fi
 done < metadata/tasks.tsv
@@ -63,6 +63,19 @@ for filename in glob.glob("fixtures/*/*.yaml"):
 print("ok: offline YAML parsing, every fixture document owned and scoped")
 PYTEST
 python3 - <<'PYTEST'
+import yaml
+items=list(yaml.safe_load_all(open('fixtures/base/networking.yaml')))
+assert len(items)==4
+api,front,catalog,port=items
+assert api['spec']['template']['spec']['containers'][0]['ports']==[{'name':'http','containerPort':80}]
+assert front['spec']['selector']!=api['spec']['selector']['matchLabels']
+assert catalog['spec']['selector']!=api['spec']['selector']['matchLabels']
+assert port['spec']['selector']==api['spec']['template']['metadata']['labels']
+assert port['spec']['ports'][0]['targetPort']==81
+assert all(i['metadata']['namespace']=='__NAMESPACE__' for i in items)
+print('ok: networking starting faults are seeded and scoped')
+PYTEST
+python3 - <<'PYTEST'
 import pathlib, yaml
 base=pathlib.Path('samples/architecture')
 for filename in ('crd.yaml','component.yaml','chart/Chart.yaml','chart/values.yaml'):
@@ -73,6 +86,7 @@ PYTEST
 
 ./tests/behavior.sh
 python3 ./tests/workloads.py
+python3 ./tests/networking.py
 
 grep -q 'kubectl apply' scripts/setup.sh || fail "setup has no fixture apply"
 grep -q 'ns_owned' scripts/teardown.sh || fail "teardown lacks ownership gate"
