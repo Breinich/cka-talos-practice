@@ -99,7 +99,7 @@ else:
     pvc['spec']['resources']['requests']['storage']='128Mi'
     assert not accepts('S05',1,objects)
     pvc['status']['capacity']['storage']='134217728'
-    assert accepts('S05',1,objects) and accepts('S05',2,objects) and accepts('S03',1,objects)
+    assert accepts('S05',1,objects) and accepts('S05',2,objects) and not accepts('S03',1,objects)
     env['MOCK_RECEIPT']='wrong'
     assert accepts('S05',1,objects) and not accepts('S05',2,objects)
     env['MOCK_RECEIPT']='lighthouse-live-ready\n'

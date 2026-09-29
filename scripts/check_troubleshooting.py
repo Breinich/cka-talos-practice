@@ -102,7 +102,7 @@ def check(task, part):
     elif task == 'T07':
         if part == 1:
             import yaml
-            original = list(yaml.safe_load_all((Path(__file__).resolve().parent.parent / 'samples/troubleshooting/qos.yaml').read_text()))
+            original = list(yaml.safe_load_all((Path(os.environ.get('CKA_TASK_RESOURCES', Path(__file__).resolve().parent.parent / 'samples/troubleshooting')) / 'qos.yaml').read_text()))
             altered = list(yaml.safe_load_all((EVIDENCE / 'T07-pods.yaml').read_text()))
             assert len(altered) == len(original) == 3
             by_name = {o['metadata']['name']: o for o in altered}

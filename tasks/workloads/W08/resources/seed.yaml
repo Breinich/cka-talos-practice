@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: W08
+  name: ember-placement
+  namespace: __NAMESPACE__
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ember-placement
+  template:
+    metadata:
+      labels:
+        app: ember-placement
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: W08
+    spec:
+      containers:
+      - image: nginx:1.27-alpine
+        name: api
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi

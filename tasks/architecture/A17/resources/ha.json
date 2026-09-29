@@ -1,0 +1,1 @@
+{"members":[{"name":"cedar","zone":"north","healthy":true},{"name":"birch","zone":"east","healthy":true},{"name":"elm","zone":"west","healthy":false}],"apiEndpoint":"api.lab.example.test:6443","certificateSANs":["api.lab.example.test"],"candidateZone":"west"}

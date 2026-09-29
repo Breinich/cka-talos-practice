@@ -1,0 +1,3 @@
+# A08 starter. Add namespace, name prefix, owner label, and replica patch.
+resources:
+- ../base

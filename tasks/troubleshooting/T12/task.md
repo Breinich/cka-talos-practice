@@ -1,0 +1,32 @@
+# T12 — Inspect Pod namespaces without host access
+
+| Field | Value |
+|---|---|
+| Task ID | `T12` |
+| CKA pillar | `troubleshooting` |
+| Mode | `conditional` |
+| Capability | `debug` |
+| Points | 2 |
+
+## Scenario
+
+This is **conditional** on permission to update `pods/ephemeralcontainers`. The owned `toolbox` Pod is disposable; the host and other namespaces are not.
+
+## Required outcome
+
+Use `kubectl debug` on `toolbox`, targeting container `toolbox`, with a single ephemeral container named `inspect-<suffix>` using `busybox:1.36`; run `sh -c "cat /proc/net/route; cat /proc/1/status"` in it. Do not use `--copy-to`, `--profile=sysadmin`, host namespaces or a node target. Verify the ephemeral container terminated successfully and its logs contain both network-route headers (`Iface`, `Destination`) and process `Name:`. If debug authorization is absent, expect SKIP.
+
+## Safety boundary
+
+Only owned resources in the configured lab namespace; no host, node or cluster-scoped changes.
+
+## Validation
+
+```bash
+./tasks/troubleshooting/T12/score.sh
+./tasks/troubleshooting/T12/score.sh --json
+```
+
+The two criteria are checked independently. Hints and answers remain outside task prompts under `answers/`.
+
+From any directory, run `./tasks/troubleshooting/T12/setup.sh` (relative to repository root), then use its `score.sh` and `teardown.sh`. Export `CKA_LAB_NAMESPACE` if using a custom namespace. Each task has an independent state/evidence directory; `--yes` confirms context only.

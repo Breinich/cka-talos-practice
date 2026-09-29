@@ -4,7 +4,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
-for f in scripts/*.sh lib/*.sh tests/*.sh; do bash -n "$f"; done
+for f in scripts/*.sh lib/*.sh tests/*.sh tasks/*/*/*.sh; do bash -n "$f"; done
 printf 'ok: bash syntax\n'
 
 header="$(head -1 metadata/tasks.tsv)"
@@ -14,7 +14,7 @@ awk -F '\t' 'NR>1 {if (NF!=6 || $1!~/^[AWNST][0-9][0-9]$/ || $3!~/^[1-9][0-9]*$/
 missing=0
 while IFS=$'\t' read -r id domain points mode requires title; do
   [[ "$id" == id ]] && continue
-  task_file="tasks/$domain/$id.md"
+  task_file="tasks/$domain/$id/task.md"
   [[ -f "$task_file" ]] || { echo "missing task file: $task_file" >&2; missing=1; continue; }
   grep -Fq "# $id — $title" "$task_file" || { echo "task title mismatch: $id" >&2; missing=1; }
   grep -Fq "| Task ID | \`$id\` |" "$task_file" || { echo "task ID metadata missing: $id" >&2; missing=1; }
@@ -22,7 +22,7 @@ while IFS=$'\t' read -r id domain points mode requires title; do
   grep -Fq "| Mode | \`$mode\` |" "$task_file" || { echo "task mode mismatch: $id" >&2; missing=1; }
   grep -Fq "| Capability | \`$requires\` |" "$task_file" || { echo "task capability mismatch: $id" >&2; missing=1; }
   grep -Fq "| Points | $points |" "$task_file" || { echo "task points mismatch: $id" >&2; missing=1; }
-  grep -Fq "./scripts/validate.sh --task $id" "$task_file" || { echo "task validation command missing: $id" >&2; missing=1; }
+  grep -Fq "./tasks/$domain/$id/score.sh" "$task_file" || { echo "task validation command missing: $id" >&2; missing=1; }
   grep -Fq "($task_file)" TASKS.md || { echo "task index link missing: $id" >&2; missing=1; }
   if ! grep -Eq "^[[:space:]]+$id\)|\|$id\)|\|$id\||^[[:space:]]+$id\|" scripts/validate.sh && [[ "$mode" != disposable-kubeadm ]]; then
     echo "missing validator: $id" >&2; missing=1
@@ -32,7 +32,7 @@ done < metadata/tasks.tsv
 # Every explicit validator and task file must have matching metadata.
 while read -r id; do awk -F '\t' -v id="$id" 'NR>1 && $1==id {ok=1} END{exit !ok}' metadata/tasks.tsv || fail "orphan validator $id"; done < <(sed -nE 's/^[[:space:]]+([AWNST][0-9]{2})\).*/\1/p' scripts/validate.sh)
 while read -r task_file; do
-  id="$(basename "$task_file" .md)"; domain="$(basename "$(dirname "$task_file")")"
+  id="$(basename "$(dirname "$task_file")")"; domain="$(basename "$(dirname "$(dirname "$task_file")")")"
   awk -F '\t' -v id="$id" -v domain="$domain" 'NR>1 && $1==id && $2==domain {ok=1} END{exit !ok}' metadata/tasks.tsv || fail "orphan or misplaced task file $task_file"
 done < <(find tasks -type f -name '*.md' | sort)
 [[ "$(find tasks -type f -name '*.md' | wc -l)" -eq "$(($(wc -l < metadata/tasks.tsv)-1))" ]] || fail "task file count mismatch"
@@ -119,9 +119,33 @@ python3 ./tests/workloads.py
 python3 ./tests/networking.py
 python3 ./tests/troubleshooting.py
 
-grep -q 'kubectl apply' scripts/setup.sh || fail "setup has no fixture apply"
-grep -q 'ns_owned' scripts/teardown.sh || fail "teardown lacks ownership gate"
-grep -q 'refuse_storage_cleanup' scripts/teardown.sh || fail "storage guard missing"
+python3 ./tests/task-lifecycle.py
+python3 ./tests/review-regressions.py
+python3 - <<'PYTEST'
+import csv, pathlib, yaml, os
+rows=list(csv.DictReader(open('metadata/tasks.tsv'),delimiter='\t'))
+assert len(rows)==60
+for row in rows:
+    d=pathlib.Path('tasks')/row['domain']/row['id']
+    assert (d/'task.md').is_file()
+    for name in ('setup','teardown','score'):
+        p=d/(name+'.sh')
+        assert p.is_file() and os.access(p,os.X_OK),p
+    seed=d/'resources/seed.yaml'
+    if seed.exists():
+        for doc in yaml.safe_load_all(seed.read_text()):
+            assert doc['metadata']['namespace']=='__NAMESPACE__'
+            assert doc['metadata']['labels']['cka-lab.io/owner']=='cka-talos-practice'
+            assert doc['metadata']['labels']['cka-lab.io/task']==row['id']
+for id, domain, required in [('N02','networking',{'estuary-api'}),
+                             ('N10','networking',{'estuary-api','estuary-front'}),
+                             ('W13','workloads',{'ember-api'}),
+                             ('T05','troubleshooting',{'dns-stray','web'})]:
+    docs=list(yaml.safe_load_all((pathlib.Path('tasks')/domain/id/'resources/seed.yaml').read_text()))
+    assert required <= {d['metadata']['name'] for d in docs}
+assert not (pathlib.Path('tasks/storage/S05/resources/seed.yaml')).exists()
+print('ok: all 60 executable task directories, isolated seeds and standalone prerequisites')
+PYTEST
 CKA_LAB_PREFIX=cka-practice CKA_LAB_NAMESPACE=cka-practice bash -c 'source lib/common.sh; validate_scope'
 if CKA_LAB_PREFIX=bad_prefix CKA_LAB_NAMESPACE=bad_prefix bash -c 'source lib/common.sh; validate_scope' >/dev/null 2>&1; then fail "unsafe scope accepted"; fi
 printf 'ok: safety invariants\nall static tests passed\n'

@@ -1,0 +1,1 @@
+{"items":[{"metadata":{"name":"oak-a","labels":{"kubernetes.io/hostname":"oak-a","node-role.kubernetes.io/worker":""}},"spec":{"taints":[{"key":"training.example.test/isolated","value":"yes","effect":"NoSchedule"}]}},{"metadata":{"name":"oak-b","labels":{"kubernetes.io/hostname":"oak-b","node-role.kubernetes.io/worker":""}},"spec":{"taints":[]}}]}

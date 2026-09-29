@@ -13,6 +13,7 @@ while (($#)); do
   esac; shift
 done
 need kubectl; need python3; validate_scope
+# Task wrappers supply a verified, independently scoped state directory.
 META="$ROOT/metadata/tasks.tsv"; EVIDENCE="$STATE_DIR/evidence"
 CAP="$STATE_DIR/capabilities.env"
 METRICS=false; NETWORKPOLICY=false; INGRESS=false; GATEWAY=false; STORAGECLASS=false; EXPANDABLE=false; HELM=false; TALOSCTL=false; DEBUG=false
@@ -65,7 +66,7 @@ validate_task() {
   # Worker-only placement is not exercisable on clusters without enough untainted,
   # Ready workers; report SKIP rather than awarding credit for Pending Pods.
   if [[ "$id" == W05 || "$id" == W08 ]]; then
-    eligible="$(kubectl get nodes -l node-role.kubernetes.io/worker -o json 2>/dev/null | python3 "$ROOT/scripts/check_workloads.py" workers "$([[ "$id" == W05 ]] && echo 3 || echo 2)" 2>/dev/null || true)"
+    eligible="$(kubectl get nodes -l node-role.kubernetes.io/worker -o json 2>/dev/null | python3 "$ROOT/scripts/check_workloads.py" workers "$([[ "$id" == W05 ]] && echo 1 || echo 2)" 2>/dev/null || true)"
     if [[ "$id" == W05 && "${eligible:-0}" -lt 1 || "$id" == W08 && "${eligible:-0}" -lt 2 ]]; then skip "$id" SKIP "$max"; return; fi
   fi
   case "$id" in

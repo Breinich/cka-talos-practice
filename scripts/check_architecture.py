@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 root = Path(__file__).resolve().parent.parent
 state = Path(os.environ.get('CKA_LAB_STATE_DIR', root / '.lab')) / 'evidence'
+resources = Path(os.environ.get('CKA_TASK_RESOURCES', root / 'samples/architecture'))
 ns = os.environ.get('CKA_LAB_NAMESPACE', os.environ.get('CKA_LAB_PREFIX', 'cka-practice'))
 prefix = os.environ.get('CKA_LAB_PREFIX', 'cka-practice')
 owner = 'cka-talos-practice'
@@ -54,9 +55,9 @@ def check(id, part):
         e = evidence(id)
         if part == 1:
             return e['serverVersion'] == live('version')['serverVersion']['gitVersion']
-        resources = command('kubectl', 'api-resources', '--namespaced=true', '-o', 'name').splitlines()
+        api_resources = command('kubectl', 'api-resources', '--namespaced=true', '-o', 'name').splitlines()
         roles = command('kubectl', 'api-resources', '--api-group=rbac.authorization.k8s.io', '-o', 'name').splitlines()
-        return e['podNamespaced'] is True and 'pods' in resources and e['roleGroup'] == 'rbac.authorization.k8s.io' and 'roles.rbac.authorization.k8s.io' in roles
+        return e['podNamespaced'] is True and 'pods' in api_resources and e['roleGroup'] == 'rbac.authorization.k8s.io' and 'roles.rbac.authorization.k8s.io' in roles
     if id == 'A02':
         f = state / 'A02.kubeconfig'
         if part == 1:
@@ -66,9 +67,21 @@ def check(id, part):
             cluster = next(x['cluster'] for x in cfg['clusters'] if x['name'] == context['cluster'])
             user = next(x['user'] for x in cfg['users'] if x['name'] == context['user'])
             server = live('config', 'view', '--minify')['clusters'][0]['cluster']['server']
+            token = user.get('token', '')
+            # Validate only signed-token claims' shape/lifetime here; live auth in part 2
+            # verifies the signature and service-account identity. Never print the token.
+            try:
+                pieces = token.split('.')
+                claims = json.loads(base64.urlsafe_b64decode(pieces[1] + '=' * (-len(pieces[1]) % 4))) if len(pieces) == 3 else {}
+                issued, expires = claims['iat'], claims['exp']
+                lifetime_ok = (type(issued) is int and type(expires) is int
+                               and 570 <= expires - issued <= 630
+                               and issued - 60 <= dt.datetime.now(dt.timezone.utc).timestamp() < expires)
+            except (KeyError, ValueError, TypeError, IndexError):
+                lifetime_ok = False
             return (len(cfg['clusters']) == len(cfg['users']) == len(cfg['contexts']) == 1
                     and cluster['server'] == server and (cluster.get('certificate-authority-data') or cluster.get('certificate-authority'))
-                    and context.get('namespace') == ns and user.get('token')
+                    and context.get('namespace') == ns and lifetime_ok
                     and not any(k in user for k in ('client-certificate-data', 'client-key-data', 'exec', 'auth-provider'))
                     and f.stat().st_mode & 0o077 == 0)
         identity = live('--kubeconfig', str(f), 'auth', 'whoami')['status']['userInfo']['username']
@@ -76,7 +89,7 @@ def check(id, part):
                 and live('--kubeconfig', str(f), 'get', 'pod', 'toolbox', '-n', ns)['metadata']['name'] == 'toolbox'
                 and command('kubectl', '--kubeconfig', str(f), 'auth', 'can-i', 'delete', 'pods', '-n', ns) == 'no')
     if id == 'A06':
-        e = evidence(id); crd = documents(root / 'samples/architecture/crd.yaml')[0]['spec']
+        e = evidence(id); crd = documents(resources / 'crd.yaml')[0]['spec']
         if part == 1:
             return all((e[k] == crd[v]) for k,v in [('group','group'),('scope','scope')]) and e['plural'] == crd['names']['plural']
         served = [v['name'] for v in crd['versions'] if v['served']]
@@ -88,7 +101,7 @@ def check(id, part):
         if len(docs) != 1: return False
         d = docs[0]
         if part == 1: return deployment(d, 'harbor-relay-relay', 2, 'nginx:1.27-alpine')
-        expected = documents(root / 'samples/architecture/chart/values.yaml')[0]
+        expected = documents(resources / 'chart/values.yaml')[0]
         return (expected['image'] == d['spec']['template']['spec']['containers'][0]['image']
                 and d['spec']['selector']['matchLabels'] == {'app': 'harbor-relay-relay'}
                 and d['spec']['template']['metadata']['labels']['app'] == 'harbor-relay-relay')
@@ -96,7 +109,7 @@ def check(id, part):
         d = live('get','deployment',f'{prefix}-kustom-app','-n',ns)
         if part == 1: return deployment(d,f'{prefix}-kustom-app',2,'nginx:1.27-alpine')
         import yaml
-        render = list(yaml.safe_load_all(command('kubectl','kustomize',str(root / 'fixtures/kustomize/overlay'))))
+        render = list(yaml.safe_load_all(command('kubectl','kustomize',str((Path(os.environ['CKA_LAB_STATE_DIR']) / 'A08-kustomize/overlay' if os.environ.get('CKA_TASK_RESOURCES') else root / 'fixtures/kustomize/overlay')))))
         return (len(render) == 1 and deployment(render[0],f'{prefix}-kustom-app',2,'nginx:1.27-alpine')
                 and d['spec']['selector']['matchLabels'] == render[0]['spec']['selector']['matchLabels'])
     if id == 'A09':
@@ -127,7 +140,7 @@ def check(id, part):
         return (e['kubelet'] == states.get('kubelet') and e['containerd'] == states.get('containerd')
                 and len(e['observation']) > 20 and e['observation'] in services)
     if id == 'A11':
-        source = json.loads((root / 'samples/architecture/restore.json').read_text())
+        source = json.loads((resources / 'restore.json').read_text())
         e = evidence(id); healthy = sum(m['healthy'] for m in source['members']); quorum = len(source['members'])//2+1
         if part == 1: return e['healthyMembers'] == healthy and e['quorum'] == quorum and e['snapshotUsable'] is True == source['snapshot']['encrypted'] == source['snapshot']['verified']
         return e['restoreAllowedNow'] is False and e['firstAction'] == 'investigate-member' and e['snapshotPath'] == source['snapshot']['path'] and source['changeWindowApproved'] is False
@@ -156,12 +169,12 @@ def check(id, part):
         if part == 1:
             return (e['validatingWebhookCount'] == len(live('get','validatingwebhookconfigurations')['items'])
                     and e['mutatingWebhookCount'] == len(live('get','mutatingwebhookconfigurations')['items']))
-        return e['podSecurityEnforce'] == live('get','namespace',ns)['metadata'].get('labels',{}).get('pod-security.kubernetes.io/enforce','unset')
+        return e['podSecurityEnforce'] == 'baseline' == live('get','namespace',ns)['metadata'].get('labels',{}).get('pod-security.kubernetes.io/enforce','unset')
     if id == 'A16':
         docs = documents(state / 'A16-operator.yaml')
         kinds = {d['kind']:d for d in docs}
         if len(docs)!=6 or set(kinds)!={'CustomResourceDefinition','Signal','Deployment','ServiceAccount','Role','RoleBinding'}:return False
-        crd = kinds['CustomResourceDefinition']['spec']; sample = documents(root / 'samples/architecture/crd.yaml')[0]['spec']
+        crd = kinds['CustomResourceDefinition']['spec']; sample = documents(resources / 'crd.yaml')[0]['spec']
         if part == 1:
             return (kinds['CustomResourceDefinition'].get('apiVersion')=='apiextensions.k8s.io/v1'
                     and crd['group'] == sample['group'] and crd['names']['kind'] == 'Signal'
@@ -191,7 +204,7 @@ def check(id, part):
                 and binding['roleRef']['kind']=='Role' and binding['roleRef']['name']=='signal-operator'
                 and binding['subjects']==[{'kind':'ServiceAccount','name':'signal-operator','namespace':ns}])
     if id == 'A17':
-        source=json.loads((root/'samples/architecture/ha.json').read_text());e=evidence(id)
+        source=json.loads((resources / 'ha.json').read_text());e=evidence(id)
         healthy=sum(m['healthy'] for m in source['members']); quorum=len(source['members'])//2+1
         if part==1:return e['members']==len(source['members']) and e['healthyMembers']==healthy and e['quorum']==quorum and e['survivesAnotherFailure'] == (healthy-1>=quorum)
         return (e['apiEndpoint']==source['apiEndpoint']

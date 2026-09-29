@@ -1,0 +1,24 @@
+# Offline input only. The policy is intentionally unsafe for an archive.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: __PREFIX__-lighthouse-records
+  labels: {cka-lab.io/owner: cka-talos-practice, cka-lab.io/prefix: __PREFIX__}
+spec:
+  capacity: {storage: 128Mi}
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: ""
+  hostPath: {path: /var/local/lighthouse-records, type: DirectoryOrCreate}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lighthouse-records
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  accessModes: [ReadOnlyMany]
+  storageClassName: ""
+  volumeName: __PREFIX__-lighthouse-records
+  resources: {requests: {storage: 128Mi}}

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: W10
+  name: ember-autoscale
+  namespace: __NAMESPACE__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ember-autoscale
+  template:
+    metadata:
+      labels:
+        app: ember-autoscale
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: W10
+    spec:
+      containers:
+      - image: nginx:1.27-alpine
+        name: api
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 20m
+            memory: 32Mi

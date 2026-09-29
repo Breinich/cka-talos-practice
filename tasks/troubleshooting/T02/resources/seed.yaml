@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: T02
+  name: sable-probe
+  namespace: __NAMESPACE__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sable-probe
+  template:
+    metadata:
+      labels:
+        app: sable-probe
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: T02
+    spec:
+      containers:
+      - image: nginx:1.27-alpine
+        name: web
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 81
+          initialDelaySeconds: 1
+          periodSeconds: 2
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi

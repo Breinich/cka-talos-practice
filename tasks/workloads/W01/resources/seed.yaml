@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: W01
+  name: ember-api
+  namespace: __NAMESPACE__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ember-api
+  template:
+    metadata:
+      labels:
+        app: ember-api
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: W01
+    spec:
+      containers:
+      - image: nginx:1.27-alpine
+        name: api
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 5m
+            memory: 8Mi

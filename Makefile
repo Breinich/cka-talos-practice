@@ -8,16 +8,16 @@ check-metadata:
 	./tests/static.sh
 
 setup:
-	./scripts/setup.sh
+	./scripts/setup.sh $(ID)
 
 score:
-	./scripts/validate.sh
+	./scripts/score.sh $(ID)
 
 teardown:
-	./scripts/teardown.sh
+	./scripts/teardown.sh $(ID)
 
 restore:
-	./scripts/restore.sh
+	./scripts/restore.sh $(ID)
 
 reset:
-	./scripts/reset.sh
+	./scripts/reset.sh $(ID)

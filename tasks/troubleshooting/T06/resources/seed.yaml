@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: T06
+  name: log-churn
+  namespace: __NAMESPACE__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-churn
+  template:
+    metadata:
+      labels:
+        app: log-churn
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: T06
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - 'echo "ledger-worker: startup rejected (exit 17)"; exit 17'
+        image: busybox:1.36
+        name: worker
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi

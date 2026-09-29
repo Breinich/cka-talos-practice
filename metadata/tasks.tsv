@@ -13,7 +13,7 @@ A11	architecture	3	simulation	core	Decide whether restore is permitted
 A12	architecture	3	disposable-kubeadm	kubeadm	Bootstrap a disposable cluster only
 A13	architecture	3	disposable-kubeadm	kubeadm	Upgrade an isolated kubeadm pair only
 A14	architecture	2	read-only	core	Check the API serving certificate
-A15	architecture	2	read-only	core	Inventory admission without changing it
+A15	architecture	2	live	core	Inventory admission without changing it
 A16	architecture	2	simulation	core	Model an operator install offline
 A17	architecture	3	simulation	core	Assess one failure before expanding HA
 A18	architecture	2	simulation	core	Render a component overlay offline

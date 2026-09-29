@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: W02
+  name: ember-release
+  namespace: __NAMESPACE__
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: ember-release
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: ember-release
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: W02
+    spec:
+      containers:
+      - image: nginx:1.26-alpine
+        name: api
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi

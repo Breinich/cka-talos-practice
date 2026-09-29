@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: T01
+  name: sable-view
+  namespace: __NAMESPACE__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sable-view
+  template:
+    metadata:
+      labels:
+        app: sable-view
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: T01
+    spec:
+      containers:
+      - image: nginx:no-such-cka-tag
+        name: web
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi

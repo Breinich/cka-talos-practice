@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cka-lab.io/owner: cka-talos-practice
+    cka-lab.io/task: W03
+  name: ember-recovery
+  namespace: __NAMESPACE__
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: ember-recovery
+  template:
+    metadata:
+      labels:
+        app: ember-recovery
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: W03
+    spec:
+      containers:
+      - image: nginx:1.27-alpine
+        name: api
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi

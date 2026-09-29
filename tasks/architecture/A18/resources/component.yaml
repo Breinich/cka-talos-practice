@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector-agent
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: collector-agent}}
+  template:
+    metadata: {labels: {app: collector-agent}}
+    spec:
+      containers:
+      - name: collector
+        image: nginx:1.27-alpine
+        resources: {requests: {cpu: 5m, memory: 8Mi}}

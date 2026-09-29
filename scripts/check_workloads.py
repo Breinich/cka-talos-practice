@@ -83,7 +83,7 @@ if TASK == 'workers':
               and not any(t.get('effect') in ('NoSchedule', 'NoExecute') for t in n.get('spec', {}).get('taints', []))
               and any(c.get('type') == 'Ready' and c.get('status') == 'True' for c in n.get('status', {}).get('conditions', []))
               for n in data.get('items', []))
-    print(count if PART != 3 or count == len(data.get('items', [])) else 0)
+    print(count)
     sys.exit(0)
 
 s = {}

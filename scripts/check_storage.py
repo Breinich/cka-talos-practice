@@ -109,7 +109,7 @@ def main():
             assert match
             return int(match[1]) * {'Mi': 2**20, 'Gi': 2**30, None: 1}[match[2]]
         target = 128 if TASK == 'S05' else 64
-        assert target * 2**20 <= size(spec['resources']['requests']['storage']) <= 128 * 2**20
+        assert size(spec['resources']['requests']['storage']) == target * 2**20
         assert size(status['capacity']['storage']) >= target * 2**20
         if PART == 2:
             pod = get('pod', 'lighthouse-live-reader')
