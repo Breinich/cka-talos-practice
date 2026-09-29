@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kustom-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: kustom-app}
+  template:
+    metadata:
+      labels: {app: kustom-app}
+    spec:
+      containers:
+      - name: app
+        image: nginx:1.27-alpine
+        resources: {requests: {cpu: 5m, memory: 8Mi}}

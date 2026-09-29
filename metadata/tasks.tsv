@@ -1,0 +1,58 @@
+id	domain	points	mode	requires	title
+A01	architecture	2	live	core	Discover API resources and cluster version
+A02	architecture	3	live	core	Build and use a minimal kubeconfig
+A03	architecture	3	live	core	Create namespace Role and RoleBinding
+A04	architecture	2	live	core	Configure a ServiceAccount
+A05	architecture	2	live	core	Test RBAC authorization
+A06	architecture	2	live	core	Inspect CRDs and API discovery
+A07	architecture	2	simulation	helm	Render and inspect a Helm release
+A08	architecture	2	live	core	Build a Kustomize overlay
+A09	architecture	2	read-only	core	Inspect control-plane components
+A10	architecture	2	read-only	talosctl	Inspect Talos machine and service health
+A11	architecture	3	simulation	core	Plan an etcd snapshot and restore
+A12	architecture	3	disposable-kubeadm	kubeadm	Practice kubeadm init and worker join
+A13	architecture	3	disposable-kubeadm	kubeadm	Practice a Kubernetes version upgrade
+A14	architecture	2	read-only	core	Inspect certificate lifetimes
+A15	architecture	2	read-only	core	Inspect admission and Pod Security controls
+W01	workloads	2	live	core	Create a Deployment with resources
+W02	workloads	2	live	core	Perform and inspect a rolling update
+W03	workloads	2	live	core	Roll back a Deployment
+W04	workloads	2	live	core	Create a Job and CronJob
+W05	workloads	2	live	core	Create a node-spanning DaemonSet
+W06	workloads	2	live	core	Create a StatefulSet with stable identity
+W07	workloads	2	live	core	Use ConfigMap and Secret projections
+W08	workloads	2	live	core	Apply node affinity and pod anti-affinity
+W09	workloads	2	live	core	Use taints and tolerations safely
+W10	workloads	2	conditional	metrics	Configure an HPA
+W11	workloads	2	live	core	Use probes and security context
+W12	workloads	2	live	core	Use init and sidecar containers
+W13	workloads	2	live	core	Protect availability during disruptions
+N01	networking	2	live	core	Expose a Deployment with ClusterIP
+N02	networking	2	live	core	Create and test a headless Service
+N03	networking	2	live	core	Inspect EndpointSlices and selectors
+N04	networking	2	live	core	Validate cluster DNS
+N05	networking	3	conditional	networkpolicy	Enforce default deny and allow rules
+N06	networking	2	conditional	ingress	Create an Ingress rule
+N07	networking	2	conditional	gateway	Create Gateway API routing
+N08	networking	2	live	core	Diagnose Service port and targetPort
+N09	networking	2	read-only	core	Inspect CNI and kube-proxy replacement
+N10	networking	1	live	core	Use port-forward for local access
+N11	networking	2	simulation	core	Compare Service types safely
+S01	storage	2	live	core	Create and mount emptyDir
+S02	storage	3	simulation	core	Model a static PV and PVC safely
+S03	storage	2	conditional	storageclass	Provision a dynamic PVC
+S04	storage	2	read-only	core	Inspect StorageClasses and CSI drivers
+S05	storage	2	conditional	expandable	Expand and verify a volume claim
+S06	storage	2	live	core	Use access modes and reclaim policy
+T01	troubleshooting	2	live	core	Repair a broken Deployment image
+T02	troubleshooting	2	live	core	Repair failed readiness
+T03	troubleshooting	2	live	core	Repair an unschedulable Pod
+T04	troubleshooting	2	live	core	Repair Service routing
+T05	troubleshooting	2	live	core	Diagnose DNS from a Pod
+T06	troubleshooting	2	live	core	Use logs and previous logs
+T07	troubleshooting	2	live	core	Use events and describe
+T08	troubleshooting	2	conditional	metrics	Inspect resource usage
+T09	troubleshooting	2	read-only	core	Assess node conditions and capacity
+T10	troubleshooting	2	read-only	talosctl	Inspect container runtime and kubelet
+T11	troubleshooting	3	read-only	talosctl	Diagnose control-plane and etcd health
+T12	troubleshooting	2	live	core	Debug with an ephemeral container
