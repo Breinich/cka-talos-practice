@@ -6,6 +6,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PREFIX="${CKA_LAB_PREFIX:-cka-practice}"
 NAMESPACE="${CKA_LAB_NAMESPACE:-$PREFIX}"
 OWNER_LABEL="cka-lab.io/owner=cka-talos-practice"
+# Every namespaced kind a live task or setup may intentionally create/change.
+LAB_NAMESPACED_KINDS="pod,service,configmap,secret,serviceaccount,replicationcontroller,daemonset.apps,deployment.apps,replicaset.apps,statefulset.apps,job.batch,cronjob.batch,horizontalpodautoscaler.autoscaling,ingress.networking.k8s.io,networkpolicy.networking.k8s.io,poddisruptionbudget.policy,role.rbac.authorization.k8s.io,rolebinding.rbac.authorization.k8s.io"
 STATE_DIR="${CKA_LAB_STATE_DIR:-$ROOT/.lab}"
 
 log() { printf '%s\n' "$*" >&2; }
@@ -39,3 +41,20 @@ ns_owned() {
     [[ "$(kubectl get ns "$NAMESPACE" -o jsonpath='{.metadata.labels.cka-lab\.io/prefix}' 2>/dev/null || true)" == "$PREFIX" ]]
 }
 render_fixture() { sed "s/__NAMESPACE__/$NAMESPACE/g; s/__PREFIX__/$PREFIX/g" "$1"; }
+
+# Never implicitly delete persistent data, including cluster-scoped lab PVs.
+refuse_storage_cleanup() {
+  local claims volumes
+  claims="$(kubectl get pvc -n "$NAMESPACE" -l "$OWNER_LABEL" -o name 2>/dev/null)" || die "cannot inspect owned PVCs; refusing cleanup"
+  volumes="$(kubectl get pv -l "$OWNER_LABEL,cka-lab.io/prefix=$PREFIX" -o name 2>/dev/null)" || die "cannot inspect owned PVs; refusing cleanup"
+  if [[ -n "$claims$volumes" ]]; then
+    log "Owned storage requires manual review before cleanup:"
+    [[ -z "$claims" ]] || log "$claims"
+    [[ -z "$volumes" ]] || log "$volumes"
+    die "inspect data, reclaim policy and backups; explicitly remove storage yourself, then rerun. --yes does not authorize data loss"
+  fi
+}
+
+has_httproutes() {
+  kubectl api-resources --api-group=gateway.networking.k8s.io -o name 2>/dev/null | grep -q '^httproutes.gateway.networking.k8s.io$'
+}

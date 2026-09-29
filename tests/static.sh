@@ -36,27 +36,38 @@ while read -r task_file; do
   awk -F '\t' -v id="$id" -v domain="$domain" 'NR>1 && $1==id && $2==domain {ok=1} END{exit !ok}' metadata/tasks.tsv || fail "orphan or misplaced task file $task_file"
 done < <(find tasks -type f -name '*.md' | sort)
 [[ "$(find tasks -type f -name '*.md' | wc -l)" -eq "$(($(wc -l < metadata/tasks.tsv)-1))" ]] || fail "task file count mismatch"
-printf 'ok: %s task files, IDs, index links, and validator metadata agree\n' "$(($(wc -l < metadata/tasks.tsv)-1))"
+total_points="$(awk -F '\t' 'NR>1 {sum+=$3} END {print sum}' metadata/tasks.tsv)"
+grep -Fq "($total_points total configured points" README.md || fail "README score total mismatch"
+printf 'ok: %s task files, IDs, index links, score total, and validator metadata agree\n' "$(($(wc -l < metadata/tasks.tsv)-1))"
 
-for f in fixtures/base/*.yaml fixtures/troubleshooting/*.yaml; do
-  grep -q 'cka-lab.io/owner: cka-talos-practice' "$f" || fail "fixture lacks owner label: $f"
-done
-printf 'ok: fixture ownership metadata\n'
+# Parse every YAML document offline. A matching label in another document is not enough.
+python3 - <<'PYTEST'
+import glob
+import sys
+try:
+    import yaml
+except ImportError:
+    sys.exit("PyYAML required for offline fixture validation (python3 -m pip install PyYAML)")
+for filename in glob.glob("fixtures/*/*.yaml"):
+    with open(filename, encoding="utf-8") as stream:
+        docs = list(yaml.safe_load_all(stream))
+    if not docs:
+        sys.exit(f"empty fixture: {filename}")
+    for index, doc in enumerate(docs, 1):
+        if not isinstance(doc, dict) or not doc.get("apiVersion") or not doc.get("kind") or not doc.get("metadata", {}).get("name"):
+            sys.exit(f"invalid document {index}: {filename}")
+        if doc["metadata"].get("labels", {}).get("cka-lab.io/owner") != "cka-talos-practice":
+            sys.exit(f"unowned document {index}: {filename}")
+        if doc["metadata"].get("namespace") != "__NAMESPACE__":
+            sys.exit(f"out-of-scope document {index}: {filename}")
+print("ok: offline YAML parsing, every fixture document owned and scoped")
+PYTEST
 
-# A client dry-run is useful when kubectl can parse without discovery. Skip cleanly otherwise.
-if command -v kubectl >/dev/null 2>&1; then
-  tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
-  sed 's/__NAMESPACE__/cka-practice/g; s/__PREFIX__/cka-practice/g' fixtures/base/lab.yaml fixtures/troubleshooting/broken.yaml >"$tmp"
-  if kubectl apply --dry-run=client --validate=false --request-timeout=2s -f "$tmp" >/dev/null 2>&1; then
-    printf 'ok: kubectl client dry-run\n'
-  else
-    printf 'skip: kubectl client dry-run requires API discovery in this environment\n'
-  fi
-fi
+./tests/behavior.sh
 
 grep -q 'kubectl apply' scripts/setup.sh || fail "setup has no fixture apply"
 grep -q 'ns_owned' scripts/teardown.sh || fail "teardown lacks ownership gate"
-grep -q 'cka-lab.io/prefix=\$PREFIX' scripts/teardown.sh || fail "cluster cleanup lacks prefix selector"
+grep -q 'refuse_storage_cleanup' scripts/teardown.sh || fail "storage guard missing"
 CKA_LAB_PREFIX=cka-practice CKA_LAB_NAMESPACE=cka-practice bash -c 'source lib/common.sh; validate_scope'
 if CKA_LAB_PREFIX=bad_prefix CKA_LAB_NAMESPACE=bad_prefix bash -c 'source lib/common.sh; validate_scope' >/dev/null 2>&1; then fail "unsafe scope accepted"; fi
 printf 'ok: safety invariants\nall static tests passed\n'

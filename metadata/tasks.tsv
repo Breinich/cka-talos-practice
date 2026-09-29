@@ -14,6 +14,9 @@ A12	architecture	3	disposable-kubeadm	kubeadm	Practice kubeadm init and worker j
 A13	architecture	3	disposable-kubeadm	kubeadm	Practice a Kubernetes version upgrade
 A14	architecture	2	read-only	core	Inspect certificate lifetimes
 A15	architecture	2	read-only	core	Inspect admission and Pod Security controls
+A16	architecture	2	simulation	core	Model an operator lifecycle safely
+A17	architecture	3	simulation	core	Plan a highly available Talos control plane
+A18	architecture	2	simulation	core	Render a cluster component with Helm or Kustomize
 W01	workloads	2	live	core	Create a Deployment with resources
 W02	workloads	2	live	core	Perform and inspect a rolling update
 W03	workloads	2	live	core	Roll back a Deployment

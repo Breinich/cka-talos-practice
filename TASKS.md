@@ -27,6 +27,9 @@ Tasks are organized by the five current CKA pillars. Each task file contains its
 | [A13](tasks/architecture/A13.md) | Practice a Kubernetes version upgrade |
 | [A14](tasks/architecture/A14.md) | Inspect certificate lifetimes |
 | [A15](tasks/architecture/A15.md) | Inspect admission and Pod Security controls |
+| [A16](tasks/architecture/A16.md) | Model an operator lifecycle safely |
+| [A17](tasks/architecture/A17.md) | Plan a highly available Talos control plane |
+| [A18](tasks/architecture/A18.md) | Render a cluster component with Helm or Kustomize |
 
 ## Workloads and Scheduling
 

@@ -12,7 +12,7 @@ while (($#)); do
     *) die "unknown option: $1";;
   esac; shift
 done
-need kubectl; validate_scope
+need kubectl; need python3; validate_scope
 META="$ROOT/metadata/tasks.tsv"; EVIDENCE="$STATE_DIR/evidence"
 CAP="$STATE_DIR/capabilities.env"
 METRICS=false; NETWORKPOLICY=false; INGRESS=false; GATEWAY=false; STORAGECLASS=false; EXPANDABLE=false; HELM=false; TALOSCTL=false
@@ -27,14 +27,21 @@ finish() {
   local status score
   if ((GOOD == CHECKS)); then status=PASS; score=$MAX
   elif ((GOOD == 0)); then status=FAIL; score=0
-  else status=PARTIAL; score=$((MAX * GOOD / CHECKS)); [[ $score -eq 0 ]] && score=1
+  else status=PARTIAL; score=$((MAX * GOOD / CHECKS))
   fi
   TOTAL=$((TOTAL+MAX)); EARNED=$((EARNED+score))
   RESULTS+=("$CUR|$status|$score|$MAX|$GOOD/$CHECKS")
 }
 skip() { RESULTS+=("$1|$2|0|$3|0/0"); }
 evidence_has() { local f="$EVIDENCE/$1.txt"; [[ -s "$f" ]] && grep -Eiq "$2" "$f"; }
-getj() { kubectl get $1 $2 -n "$NAMESPACE" -o "jsonpath=$3" 2>/dev/null; }
+getj() { kubectl get "$1" "$2" -n "$NAMESPACE" -o "jsonpath=$3" 2>/dev/null; }
+ready_endpoint_for() {
+  kubectl get endpointslice -n "$NAMESPACE" -l "kubernetes.io/service-name=$1" \
+    -o jsonpath='{range .items[*].endpoints[*]}{.conditions.ready}{"|"}{.addresses[0]}{"\n"}{end}' 2>/dev/null |
+    grep -Eq '^true\|.+'
+}
+resource_check() { kubectl get "$1" "$2" -n "$NAMESPACE" -o json | python3 "$ROOT/scripts/check_resource.py" "$3"; }
+policy_pair() { resource_check networkpolicy default-deny default-deny && resource_check networkpolicy allow-web allow-web; }
 export -f getj
 export NAMESPACE PREFIX
 
@@ -64,14 +71,17 @@ validate_task() {
     A08) begin "$id" "$max"; check kubectl get deploy exam-kustom-app -n "$NAMESPACE"; check bash -c "[[ \$(getj deploy exam-kustom-app '{.spec.replicas}') == 2 ]]"; finish;;
     A09) begin "$id" "$max"; check evidence_has A09 'kube-apiserver'; check evidence_has A09 'etcd|scheduler|controller'; finish;;
     A10) begin "$id" "$max"; check evidence_has A10 'healthy|running'; check evidence_has A10 'kubelet|containerd'; finish;;
-    A11) begin "$id" "$max"; check evidence_has A11 'snapshot|backup'; check evidence_has A11 'restore|quorum'; finish;;
+    A11) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A11.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'snapshot|backup' \"\$f\" && grep -Eiq 'encrypt|protect|secure' \"\$f\" && grep -Eiq 'verify|integrity|status' \"\$f\""; check bash -c "f='$EVIDENCE/A11.txt'; grep -Eiq 'restore' \"\$f\" && grep -Eiq 'quorum|member|endpoint' \"\$f\" && grep -Eiq 'precondition|maintenance|rollback' \"\$f\""; finish;;
     A14) begin "$id" "$max"; check evidence_has A14 'notafter|expire|valid'; check evidence_has A14 'certificate|cert'; finish;;
     A15) begin "$id" "$max"; check evidence_has A15 'admission|webhook'; check evidence_has A15 'pod.?security|enforce|audit|warn'; finish;;
+    A16) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A16-operator.yaml'; grep -Eq '^kind: CustomResourceDefinition$' \"\$f\" && grep -Eq '^kind: Deployment$' \"\$f\" && grep -Eq '^kind: ServiceAccount$' \"\$f\""; check bash -c "f='$EVIDENCE/A16-operator.yaml'; t='$EVIDENCE/A16.txt'; grep -Eq '^kind: (ClusterRole|Role)$' \"\$f\" && grep -Eq '^kind: (ClusterRoleBinding|RoleBinding)$' \"\$f\" && [[ -s \"\$t\" ]] && grep -Eiq 'upgrade|rollback' \"\$t\" && grep -Eiq 'remov|uninstall' \"\$t\""; finish;;
+    A17) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A17.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'three|3|odd' \"\$f\" && grep -Eiq 'endpoint|load.?balanc' \"\$f\" && grep -Eiq 'failure.?domain|zone' \"\$f\""; check bash -c "f='$EVIDENCE/A17.txt'; grep -Eiq 'quorum|etcd' \"\$f\" && grep -Eiq 'certificate|SAN' \"\$f\" && grep -Eiq 'talos|machine.?config|patch' \"\$f\" && grep -Eiq 'validat|health' \"\$f\" && grep -Eiq 'rollback|revert' \"\$f\""; finish;;
+    A18) begin "$id" "$max"; check bash -c "f='$EVIDENCE/A18-component.yaml'; grep -Eq '^kind: (Deployment|DaemonSet)$' \"\$f\" && grep -Eq 'namespace:[[:space:]]*(kube-system|$NAMESPACE)' \"\$f\""; check bash -c "f='$EVIDENCE/A18.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'helm template|kubectl kustomize' \"\$f\" && grep -Eiq 'values|overlay|patch' \"\$f\""; finish;;
     W01) begin "$id" "$max"; check kubectl get deploy resource-app -n "$NAMESPACE"; check bash -c "[[ -n \$(getj deploy resource-app '{.spec.template.spec.containers[0].resources.requests.cpu}') && -n \$(getj deploy resource-app '{.spec.template.spec.containers[0].resources.limits.memory}') ]]"; finish;;
     W02) begin "$id" "$max"; check bash -c "[[ \$(getj deploy rollout-app '{.spec.strategy.type}') == RollingUpdate ]]"; check bash -c "kubectl rollout status deploy/rollout-app -n '$NAMESPACE' --timeout=1s"; finish;;
     W03) begin "$id" "$max"; check bash -c "kubectl rollout history deploy/rollout-app -n '$NAMESPACE' | grep -Eq '[2-9]'"; check bash -c "kubectl rollout status deploy/rollout-app -n '$NAMESPACE' --timeout=1s"; finish;;
-    W04) begin "$id" "$max"; check kubectl get job one-shot -n "$NAMESPACE"; check kubectl get cronjob periodic -n "$NAMESPACE"; finish;;
-    W05) begin "$id" "$max"; check kubectl get ds node-agent -n "$NAMESPACE"; check bash -c "[[ \$(getj ds node-agent '{.status.numberReady}') == \$(getj ds node-agent '{.status.desiredNumberScheduled}') && -n \$(getj ds node-agent '{.status.numberReady}') ]]"; finish;;
+    W04) begin "$id" "$max"; check bash -c "[[ \$(getj job one-shot '{.status.conditions[?(@.type==\"Complete\")].status}') == True ]]"; check resource_check cronjob periodic cronjob; finish;;
+    W05) begin "$id" "$max"; check kubectl get ds node-agent -n "$NAMESPACE"; check bash -c "desired=\$(getj ds node-agent '{.status.desiredNumberScheduled}'); ready=\$(getj ds node-agent '{.status.numberReady}'); [[ \$desired =~ ^[0-9]+$ && \$ready =~ ^[0-9]+$ && \$desired -gt 0 && \$ready -eq \$desired ]]"; finish;;
     W06) begin "$id" "$max"; check bash -c "[[ \$(getj sts ordered-app '{.spec.serviceName}') == ordered-app ]]"; check bash -c "[[ \$(getj svc ordered-app '{.spec.clusterIP}') == None ]]"; finish;;
     W07) begin "$id" "$max"; check bash -c "kubectl get cm app-config -n '$NAMESPACE' >/dev/null && kubectl get secret app-secret -n '$NAMESPACE' >/dev/null"; check bash -c "v=\$(kubectl get pod config-consumer -n '$NAMESPACE' -o yaml 2>/dev/null); grep -q app-config <<<\"\$v\" && grep -q app-secret <<<\"\$v\""; finish;;
     W08) begin "$id" "$max"; check bash -c "[[ -n \$(getj deploy affinity-app '{.spec.template.spec.affinity.nodeAffinity}') ]]"; check bash -c "[[ -n \$(getj deploy affinity-app '{.spec.template.spec.affinity.podAntiAffinity}') ]]"; finish;;
@@ -80,14 +90,14 @@ validate_task() {
     W11) begin "$id" "$max"; check bash -c "[[ -n \$(getj pod hardened-app '{.spec.containers[0].readinessProbe}') ]]"; check bash -c "[[ \$(getj pod hardened-app '{.spec.containers[0].securityContext.allowPrivilegeEscalation}') == false ]]"; finish;;
     W12) begin "$id" "$max"; check bash -c "[[ -n \$(getj pod composed-app '{.spec.initContainers[0].name}') ]]"; check bash -c "[[ \$(getj pod composed-app '{.spec.containers[*].name}') == *sidecar* ]]"; finish;;
     W13) begin "$id" "$max"; check bash -c "[[ \$(getj pdb resource-app '{.spec.minAvailable}') == 1 ]]"; check evidence_has W13 'voluntary|involuntary'; finish;;
-    N01) begin "$id" "$max"; check bash -c "[[ \$(getj svc app-service '{.spec.type}') == ClusterIP ]]"; check bash -c "[[ -n \$(getj endpointslice -l kubernetes.io/service-name=app-service '{.items[0].endpoints[0].addresses[0]}') ]]"; finish;;
+    N01) begin "$id" "$max"; check bash -c "[[ \$(getj svc app-service '{.spec.type}') == ClusterIP ]]"; check ready_endpoint_for app-service; finish;;
     N02) begin "$id" "$max"; check bash -c "[[ \$(getj svc ordered-headless '{.spec.clusterIP}') == None ]]"; check evidence_has N02 'ordered-headless'; finish;;
     N03) begin "$id" "$max"; check evidence_has N03 'endpoint|address'; check evidence_has N03 'selector|label'; finish;;
     N04) begin "$id" "$max"; check evidence_has N04 'cluster.local|svc'; check evidence_has N04 'address|name'; finish;;
-    N05) begin "$id" "$max"; check kubectl get networkpolicy default-deny -n "$NAMESPACE"; check kubectl get networkpolicy allow-web -n "$NAMESPACE"; finish;;
+    N05) begin "$id" "$max"; check policy_pair; check bash -c "f='$EVIDENCE/N05.txt'; [[ -s \"\$f\" ]] && grep -Eiq 'allow|success|connected|200' \"\$f\" && grep -Eiq 'deny|timeout|blocked|failed' \"\$f\""; finish;;
     N06) begin "$id" "$max"; check kubectl get ingress web-ingress -n "$NAMESPACE"; check bash -c "[[ -n \$(getj ingress web-ingress '{.spec.rules[0].http.paths[0].backend.service.name}') ]]"; finish;;
-    N07) begin "$id" "$max"; check kubectl get httproute web-route -n "$NAMESPACE"; check bash -c "[[ -n \$(getj httproute web-route '{.spec.parentRefs[0].name}') ]]"; finish;;
-    N08) begin "$id" "$max"; check bash -c "[[ \$(getj svc port-fixed '{.spec.ports[0].targetPort}') == http ]]"; check bash -c "[[ -n \$(getj endpointslice -l kubernetes.io/service-name=port-fixed '{.items[0].endpoints[0].addresses[0]}') ]]"; finish;;
+    N07) begin "$id" "$max"; check bash -c "[[ -n \$(getj httproute web-route '{.spec.parentRefs[0].name}') && \$(getj httproute web-route '{.spec.rules[0].backendRefs[0].name}') == web ]]"; check resource_check httproute web-route route; finish;;
+    N08) begin "$id" "$max"; check bash -c "[[ \$(getj svc port-fixed '{.spec.ports[0].targetPort}') == http ]]"; check ready_endpoint_for port-fixed; finish;;
     N09) begin "$id" "$max"; check evidence_has N09 'cilium|calico|flannel|antrea|cni'; check evidence_has N09 'proxy|ebpf|iptables|ipvs'; finish;;
     N10) begin "$id" "$max"; check evidence_has N10 'port-forward'; check evidence_has N10 '200|welcome|nginx'; finish;;
     N11) begin "$id" "$max"; check grep -Eq 'type:[[:space:]]*NodePort' "$EVIDENCE/N11-services.yaml"; check grep -Eq 'type:[[:space:]]*ExternalName' "$EVIDENCE/N11-services.yaml"; finish;;
@@ -100,7 +110,7 @@ validate_task() {
     T01) begin "$id" "$max"; check bash -c "kubectl rollout status deploy/broken-image -n '$NAMESPACE' --timeout=1s"; check bash -c "[[ \$(getj deploy broken-image '{.spec.template.spec.containers[0].image}') != *no-such* ]]"; finish;;
     T02) begin "$id" "$max"; check bash -c "kubectl rollout status deploy/broken-ready -n '$NAMESPACE' --timeout=1s"; check bash -c "[[ \$(getj deploy broken-ready '{.spec.template.spec.containers[0].readinessProbe.httpGet.port}') != 81 ]]"; finish;;
     T03) begin "$id" "$max"; check bash -c "[[ \$(getj pod unschedulable '{.status.phase}') == Running ]]"; check bash -c "[[ -z \$(getj pod unschedulable '{.spec.nodeSelector.cka-lab\\.io/nonexistent}') ]]"; finish;;
-    T04) begin "$id" "$max"; check bash -c "[[ -n \$(getj endpointslice -l kubernetes.io/service-name=broken-service '{.items[0].endpoints[0].addresses[0]}') ]]"; check bash -c "[[ \$(getj svc broken-service '{.spec.selector.app}') == web ]]"; finish;;
+    T04) begin "$id" "$max"; check ready_endpoint_for broken-service; check bash -c "[[ \$(getj svc broken-service '{.spec.selector.app}') == web ]]"; finish;;
     T05) begin "$id" "$max"; check evidence_has T05 'nslookup|dig|getent'; check evidence_has T05 'cluster.local|kubernetes.default'; finish;;
     T06) begin "$id" "$max"; check evidence_has T06 'logs'; check evidence_has T06 'previous|-p'; finish;;
     T07) begin "$id" "$max"; check evidence_has T07 'event|warning|failed'; check evidence_has T07 'describe'; finish;;
@@ -126,4 +136,4 @@ else
   for r in "${RESULTS[@]}"; do IFS='|' read -r id status score max detail <<<"$r"; printf '%-4s %-11s %3d/%-3d %s\n' "$id" "$status" "$score" "$max" "$detail"; done
   printf 'Score: %d/%d (SKIP/UNSUPPORTED excluded)\n' "$EARNED" "$TOTAL"
 fi
-[[ "$EARNED" -eq "$TOTAL" ]]
+[[ "$EARNED" -eq "$TOTAL" ]] && ! printf '%s\n' "${RESULTS[@]}" | grep -q '|PARTIAL|'

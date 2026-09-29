@@ -13,35 +13,54 @@ while (($#)); do
   esac
   shift
 done
-need kubectl; need sed; need grep; validate_scope; context_guard "$YES"
+need kubectl; need sed; need grep; need python3; validate_scope; context_guard "$YES"
 kubectl cluster-info >/dev/null
 mkdir -p "$STATE_DIR"; chmod 700 "$STATE_DIR"; umask 077
 if [[ -f "$STATE_DIR/state.env" ]]; then
+  [[ -r "$STATE_DIR/before.yaml" ]] || die "saved state lacks baseline manifest; refusing setup"
   saved_identity="$(bash -c 'source "$1"; printf "%s|%s|%s" "$NAMESPACE" "$CONTEXT" "$SERVER"' _ "$STATE_DIR/state.env")"
   current_identity="$NAMESPACE|$(kubectl config current-context)|$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
   [[ "$saved_identity" == "$current_identity" ]] || die "saved state belongs to $saved_identity, not $current_identity; restore/teardown it or use a separate CKA_LAB_STATE_DIR"
 fi
 
-if kubectl get ns "$NAMESPACE" >/dev/null 2>&1 && ! ns_owned; then
-  die "namespace $NAMESPACE already exists without the lab ownership label"
+if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
+  ns_owned || die "namespace $NAMESPACE already exists without the lab ownership label"
+  refuse_storage_cleanup
+  # Do not silently adopt or overwrite an unrelated object with a fixture name.
+  for fixture in configmap/lab-info deployment.apps/web service/web pod/toolbox \
+                 deployment.apps/broken-image deployment.apps/broken-ready pod/unschedulable service/broken-service; do
+    if kubectl get "$fixture" -n "$NAMESPACE" >/dev/null 2>&1; then
+      owner="$(kubectl get "$fixture" -n "$NAMESPACE" -o jsonpath='{.metadata.labels.cka-lab\.io/owner}')"
+      [[ "$owner" == cka-talos-practice ]] || die "fixture collision with unowned $fixture in $NAMESPACE"
+    fi
+  done
 fi
 
-# Preserve the state before the first setup. Reruns never overwrite that baseline.
+# Commit the baseline only after every snapshot call succeeds. Reruns retain it.
 if [[ ! -f "$STATE_DIR/state.env" ]]; then
   existed=false
+  tmp="$(mktemp -d "$STATE_DIR/snapshot.XXXXXXXX")"
+  trap 'rm -rf "$tmp"' EXIT
   if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
     existed=true
-    umask 077
-    kubectl get all,configmap,secret,serviceaccount,role.rbac.authorization.k8s.io,rolebinding.rbac.authorization.k8s.io,pvc,networkpolicy -n "$NAMESPACE" -o yaml >"$STATE_DIR/before.yaml"
+    kubectl get "$LAB_NAMESPACED_KINDS" -n "$NAMESPACE" -o json >"$tmp/core.json"
+    files=("$tmp/core.json")
+    if has_httproutes; then
+      kubectl get httproute.gateway.networking.k8s.io -n "$NAMESPACE" -o json >"$tmp/route.json"
+      files+=("$tmp/route.json")
+    fi
+    python3 "$ROOT/scripts/snapshot.py" "${files[@]}" >"$tmp/before.yaml"
   else
-    printf 'apiVersion: v1\nkind: List\nitems: []\n' >"$STATE_DIR/before.yaml"
+    printf '{"apiVersion":"v1","kind":"List","items":[]}\n' >"$tmp/before.yaml"
   fi
   {
     printf 'CONTEXT=%q\nSERVER=%q\n' "$(kubectl config current-context)" "$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')"
     printf 'PREFIX=%q\nNAMESPACE=%q\nNAMESPACE_EXISTED=%q\n' "$PREFIX" "$NAMESPACE" "$existed"
     printf 'CREATED_AT=%q\n' "$(date -u +%FT%TZ)"
-  } >"$STATE_DIR/state.env"
-  chmod 600 "$STATE_DIR/state.env" "$STATE_DIR/before.yaml"
+  } >"$tmp/state.env"
+  chmod 600 "$tmp/state.env" "$tmp/before.yaml"
+  mv "$tmp/before.yaml" "$STATE_DIR/before.yaml"
+  mv "$tmp/state.env" "$STATE_DIR/state.env"
 fi
 
 if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
@@ -59,7 +78,15 @@ if kubectl api-resources --api-group=networking.k8s.io -o name | grep -qx networ
   if kubectl get pods -A -o name 2>/dev/null | grep -Eiq '(cilium|calico|weave|antrea)'; then networkpolicy=true; fi
 fi
 kubectl get ingressclass >/dev/null 2>&1 && [[ -n "$(kubectl get ingressclass -o name 2>/dev/null)" ]] && ingress=true || :
-if has_api gateway.networking.k8s.io && [[ -n "$(kubectl get gatewayclass -o name 2>/dev/null)" ]] && [[ -n "$(kubectl get gateway -A -o name 2>/dev/null)" ]]; then gateway=true; fi
+# Only an accepted/programmed HTTP listener allowing same-namespace routes counts.
+if has_httproutes; then
+  while read -r gw; do
+    [[ -n "$gw" ]] || continue
+    if kubectl get "$gw" -n "$NAMESPACE" -o json | python3 "$ROOT/scripts/check_resource.py" gateway; then
+      gateway=true; break
+    fi
+  done < <(kubectl get gateway.gateway.networking.k8s.io -n "$NAMESPACE" -o name 2>/dev/null || true)
+fi
 default_sc="$(kubectl get storageclass -o jsonpath='{range .items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")]}{.metadata.name}{end}' 2>/dev/null || true)"
 [[ -n "$default_sc" ]] && storageclass=true || :
 [[ -n "$default_sc" && "$(kubectl get storageclass "$default_sc" -o jsonpath='{.allowVolumeExpansion}' 2>/dev/null)" == true ]] && expandable=true || :

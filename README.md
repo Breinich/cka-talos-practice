@@ -1,12 +1,12 @@
 # Safe CKA practice for Talos Kubernetes
 
-A namespace-scoped, self-scoring practice bank for the five current CKA domains, designed for the existing Kubernetes v1.35 Talos cluster whose expected context is `admin@lake`. It contains 57 tasks and deliberately does **not** make changes when cloned or tested.
+A namespace-scoped, self-scoring practice bank for the five current CKA domains, designed for the existing Kubernetes v1.35 Talos cluster whose expected context is `admin@lake`. It contains 60 tasks and deliberately does **not** make changes when cloned or tested.
 
 > This repository is not an installer and no script is automatically run. Review every command. Never point practice tooling at a production context.
 
 ## Prerequisites
 
-Required: Bash 4+, `kubectl`, `sed`, `grep`, `awk`, and a reachable Kubernetes API. Your identity needs to create namespaced exercise resources and, for the optional static-PV/RBAC exercises, only the narrowly requested cluster-scoped resources. Optional: `talosctl` for read-only Talos tasks and `helm` for local rendering. Metrics Server, a NetworkPolicy-enforcing CNI, an Ingress controller, Gateway API, and dynamic storage are detected, not assumed. Helm and Gateway API are known to be absent initially, and no default StorageClass is assumed.
+Required for setup/scoring: Bash 4+, `kubectl`, Python 3, `sed`, `grep`, `awk`, and a reachable Kubernetes API. `make test` additionally needs PyYAML for offline fixture parsing. Your identity needs permissions for namespaced exercise resources, read-only discovery of namespaced APIs and PVs, and read access to lab-owned storage; cluster-scoped PV/RBAC installation is simulation-only. Optional: `talosctl` for read-only Talos tasks and `helm` for local rendering. Metrics Server, a NetworkPolicy-enforcing CNI, an Ingress controller, Gateway API, and dynamic storage are detected, not assumed. Helm and Gateway API are known to be absent initially, and no default StorageClass is assumed.
 
 Before setup:
 
@@ -24,8 +24,8 @@ make test                            # static only; no cluster mutation
 - `--yes` confirms context choice; it does not broaden scope or bypass ownership checks.
 - Capability checks are conservative. NetworkPolicy is enabled only when the API plus a recognized enforcing CNI are visible. Conditional tasks become `SKIP`, not failures, when absent.
 - Read-only Talos tasks prohibit apply-config, reset, reboot, service restarts and quorum changes. Kubeadm lifecycle tasks are explicitly unsupported here.
-- Teardown verifies namespace ownership before deletion and removes only lab-labelled cluster-scoped PV/RBAC exercise objects. Never add the ownership label to unrelated resources.
-- `.lab/state.env` and mode-0600 `before.yaml` record the original namespace state. No credentials should be placed in evidence except the intentionally short-lived A02 kubeconfig.
+- Teardown refuses pre-existing namespaces, owned PVCs/PVs, unowned namespaced objects, or incomplete API discovery. It deletes no cluster-scoped objects. Never add the ownership label to unrelated resources.
+- `.lab/state.env` and mode-0600 `before.yaml` record the original lab-owned resources (not unrelated namespace contents). No credentials should be placed in evidence except the intentionally short-lived A02 kubeconfig.
 
 ## Usage
 
@@ -52,7 +52,7 @@ Override scope with `CKA_LAB_PREFIX` and `CKA_LAB_NAMESPACE` or setup flags. The
 
 ## Scoring
 
-Task weights are in `metadata/tasks.tsv` (121 total configured points before capability exclusions). Each task has two independently checked criteria and can receive partial points. `PASS`, `PARTIAL`, and `FAIL` apply only to supported tasks. `SKIP` means a detected optional API/controller/capability is unavailable. `UNSUPPORTED` means the exercise belongs in a disposable kubeadm environment or a required local tool is missing. Skipped/unsupported points are excluded from the denominator. A nonzero scorer exit means not all applicable points were earned; JSON remains available for automation.
+Task weights are in `metadata/tasks.tsv` (128 total configured points before capability exclusions). Each task has two independently checked criteria; partial criteria receive floor-rounded points (a one-point task can be `PARTIAL` at 0/1). `PASS`, `PARTIAL`, and `FAIL` apply only to supported tasks. `SKIP` means a detected optional API/controller/capability is unavailable. `UNSUPPORTED` means the exercise belongs in a disposable kubeadm environment or a required local tool is missing. Skipped/unsupported points are excluded from the denominator. A nonzero scorer exit means not all applicable points were earned; JSON remains available for automation.
 
 The scorer checks end state or sanitized evidence; it never repairs resources and does not emit full commands or solutions. Some evidence checks establish that the requested diagnostic concepts were recorded, not that every conclusion is semantically correct—review those manually against `answers/`.
 
@@ -64,19 +64,19 @@ The scorer checks end state or sanitized evidence; it never repairs resources an
 ./scripts/restore.sh           # return to the state captured before first setup
 ```
 
-Normally the namespace did not exist, so restore is equivalent to safe teardown. If an already lab-owned namespace existed, restore removes current labelled lab objects and reapplies the saved manifest. The backup remains for audit. Namespace deletion is asynchronous. Review `.lab/state.env` and `.lab/before.yaml` before recovery if setup was interrupted. Never manually edit `state.env`.
+Normally the namespace did not exist, so restore is equivalent to safe teardown. For a namespace that already existed, restore deletes only current lab-owned task-managed kinds (including HTTPRoutes when available) and reapplies only the lab-owned baseline; unrelated resources are left untouched. Setup refuses fixture-name collisions with unrelated objects. Persistent storage is never deleted automatically: restore, reset and teardown refuse any owned PVC/PV and print names for separate manual review/removal. YAML backups do **not** contain volume data; Services can receive new IPs after restore and runtime/controller-generated fields may not round-trip. Teardown/reset also refuse a namespace containing unowned resources; system-generated unowned objects can require manual review. The backup remains for audit. Namespace deletion is asynchronous. Review `.lab/state.env` and `.lab/before.yaml` before recovery if setup was interrupted. Never manually edit `state.env`.
 
 ## Task map
 
 | Current CKA domain | IDs | Tasks | Coverage |
 |---|---:|---:|---|
-| Cluster Architecture, Installation & Configuration | A01–A15 | 15 | API discovery, kubeconfig, RBAC, ServiceAccounts, CRDs, Helm, Kustomize, admission, control plane, Talos, etcd, certificates, kubeadm install/join/upgrade |
+| Cluster Architecture, Installation & Configuration | A01–A18 | 18 | API discovery, kubeconfig, RBAC, ServiceAccounts, CRD inspection/offline operator model, Helm/Kustomize offline component renders, admission, HA control-plane design, Talos, etcd, certificates, kubeadm install/join/upgrade |
 | Workloads & Scheduling | W01–W13 | 13 | resources, rollout/rollback, Jobs/CronJobs, DaemonSets, StatefulSets, configuration, affinity, taints, HPA, probes/security, init/sidecars, disruption budgets |
 | Services & Networking | N01–N11 | 11 | Services, DNS, EndpointSlices, policies, Ingress, Gateway API, Service types, CNI/service routing, port-forward |
 | Storage | S01–S06 | 6 | ephemeral/static/dynamic volumes, PVC binding/expansion, StorageClass/CSI, access/reclaim semantics |
 | Troubleshooting | T01–T12 | 12 | applications, probes, scheduling, Services, DNS, logs/events, usage, nodes, runtime/kubelet, control plane/etcd, ephemeral debug |
 
-The metadata has 58 rows including its header: 57 tasks total. Use `make check-metadata` to prove prompt, metadata and validator IDs agree.
+The metadata has 61 rows including its header: 60 tasks total. Use `make check-metadata` to prove prompt, metadata and validator IDs agree.
 
 ## Talos versus kubeadm caveat
 
@@ -84,4 +84,4 @@ Talos Linux is API-managed, immutable, and does not provide the host-shell/syste
 
 ## Static validation
 
-`make test` runs `bash -n`, metadata/task/scorer consistency checks, YAML client dry-runs when `kubectl` is present, and verifies scripts contain no direct mutation during tests. It does not contact or mutate a cluster. See `tests/static.sh`.
+`make test` runs `bash -n`, metadata/task/scorer consistency checks, offline PyYAML parsing and per-document fixture ownership checks, plus mocked negative/positive scorer and restore safety tests. It neither contacts nor mutates a cluster. See `tests/static.sh`.
