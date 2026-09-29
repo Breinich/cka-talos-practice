@@ -56,6 +56,6 @@ T06	troubleshooting	2	live	core	Capture the failed attempt before repair
 T07	troubleshooting	2	simulation	core	Rank eviction candidates offline
 T08	troubleshooting	2	conditional	metrics	Read a metrics snapshot
 T09	troubleshooting	2	read-only	core	Build a node pressure inventory
-T10	troubleshooting	2	read-only	talosctl	Trace kubelet to its runtime
+T10	troubleshooting	2	live	talosctl	Trace kubelet to its runtime
 T11	troubleshooting	3	read-only	talosctl	Correlate control-plane signals
 T12	troubleshooting	2	conditional	debug	Inspect Pod namespaces without host access

@@ -18,7 +18,7 @@ OWNER = 'cka-talos-practice'
 OFFLINE = {'A06', 'A07', 'A11', 'A12', 'A13', 'A16', 'A17', 'A18', 'W09',
            'N04', 'N05', 'N06', 'N07', 'N09', 'N11', 'S02', 'S06', 'T07'}
 # These tasks inspect shared cluster state but create no namespace or objects.
-READ_ONLY = {'A01', 'A09', 'A10', 'A14', 'S04', 'T09', 'T10', 'T11'}
+READ_ONLY = {'A01', 'A09', 'A10', 'A14', 'S04', 'T09', 'T11'}
 
 
 def abort(reason):
@@ -195,34 +195,67 @@ def seed(id, domain, ns, prefix):
         cmd('set', 'image', 'deployment/ember-recovery', 'api=nginx:no-such-tag-cka-practice', '-n', ns)
 
 
+def clear_attempt(directory):
+    # Reset may discard only this task instance's local submissions and overlay.
+    # Refuse symlinked roots before touching the cluster or another directory.
+    for path in (directory / 'evidence', directory / 'A08-kustomize'):
+        if path.is_symlink():
+            abort('symlinked task evidence/overlay; refusing reset')
+    for path in (directory / 'evidence', directory / 'A08-kustomize'):
+        if path.exists():
+            shutil.rmtree(path)
+    (directory / 'capabilities.env').unlink(missing_ok=True)
+
+
 def main():
     operation, id, *args = sys.argv[1:]
     import csv
     with (ROOT / 'metadata/tasks.tsv').open() as stream:
         tasks = {row['id']: row['domain'] for row in csv.DictReader(stream, delimiter='\t')}
-    if operation not in ('setup', 'teardown') or id not in tasks:
+    if operation not in ('setup', 'teardown', 'reset') or id not in tasks:
         abort('unknown operation or task ID')
     prefix, ns, directory, yes = scope(id, tasks[id], args)
+    if directory.is_symlink() or directory.parent.is_symlink():
+        abort('symlinked task state; refusing lifecycle operation')
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.chmod(directory, 0o700)
     with (directory / '.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         state_file = directory / 'state.json'
         if id in OFFLINE:
-            if operation == 'setup':
-                (directory / 'evidence').mkdir(exist_ok=True, mode=0o700)
-            elif state_file.exists():
+            if state_file.exists():
                 abort('offline task has unexpected cluster state')
+            if operation == 'reset':
+                clear_attempt(directory)
+            if operation in ('setup', 'reset'):
+                (directory / 'evidence').mkdir(exist_ok=True, mode=0o700)
             return
         current = identity(yes)
         if id in READ_ONLY:
-            if operation == 'setup':
+            if state_file.exists():
+                abort('read-only task has unexpected cluster state')
+            if operation == 'reset':
+                clear_attempt(directory)
+            if operation in ('setup', 'reset'):
                 (directory / 'evidence').mkdir(exist_ok=True, mode=0o700)
                 subprocess.run(['bash', str(ROOT / 'scripts/task-capabilities.sh')], check=True)
-            elif state_file.exists():
-                abort('read-only task has unexpected cluster state')
             return
         namespace = namespace_object(ns)
+        if operation == 'reset':
+            state = load_state(state_file, id, prefix, ns, current)
+            assert_namespace(namespace, state, id, ns, prefix)
+            # A failed storage/ownership/symlink preflight must retain both the
+            # namespace and submissions; reset grants no extra delete authority.
+            for path in (directory / 'evidence', directory / 'A08-kustomize'):
+                if path.is_symlink():
+                    abort('symlinked task evidence/overlay; refusing reset')
+            storage_guard(ns)
+            ownership_guard(ns, id)
+            cmd('delete', 'namespace', ns, '--wait=true')
+            state_file.unlink()
+            clear_attempt(directory)
+            namespace = None
+            operation = 'setup'
         if operation == 'setup' and not state_file.exists():
             if namespace:
                 abort('namespace already exists: never adopt, even if labelled; use another namespace')

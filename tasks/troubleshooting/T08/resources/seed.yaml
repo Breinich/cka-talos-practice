@@ -1,25 +1,33 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   labels:
-    app: toolbox
     cka-lab.io/owner: cka-talos-practice
     cka-lab.io/task: T08
-  name: toolbox
+  name: web
   namespace: __NAMESPACE__
 spec:
-  containers:
-  - command:
-    - sh
-    - -c
-    - 'trap : TERM INT; sleep 7d & wait'
-    image: busybox:1.36
-    name: toolbox
-    resources:
-      limits:
-        cpu: 50m
-        memory: 32Mi
-      requests:
-        cpu: 5m
-        memory: 8Mi
-  terminationGracePeriodSeconds: 0
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        cka-lab.io/owner: cka-talos-practice
+        cka-lab.io/task: T08
+    spec:
+      containers:
+      - image: nginx:1.27-alpine
+        name: web
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi

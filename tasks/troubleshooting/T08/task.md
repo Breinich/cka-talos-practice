@@ -10,7 +10,7 @@
 
 ## Scenario
 
-This is **conditional** on the setup metrics capability. The Metrics API must serve both nodes and namespaced Pods. No load generation or metrics installation is authorized.
+Setup seeds an owned `web` Deployment in this task's isolated namespace. This is **conditional** on the setup metrics capability: the Metrics API must serve both nodes and namespaced Pods. Wait for a `web-...` Pod to run and appear in `kubectl top pods -n <lab-namespace>`. No load generation or metrics installation is authorized.
 
 ## Required outcome
 

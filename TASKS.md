@@ -5,7 +5,7 @@ Tasks are organized by the five current CKA pillars. Each task file contains its
 - Run `tasks/<pillar>/<ID>/setup.sh` and work only in its printed namespace (default `cka-practice-<lowercase-id>`). Offline and read-only tasks create no namespace.
 - Label new live objects `cka-lab.io/owner=cka-talos-practice` and `cka-lab.io/task=<ID>`; never apply offline cluster-scoped samples.
 - Save evidence under `.lab/<ID>/<namespace>/evidence/` (A02 is the one intentionally short-lived credential; keep mode 0600). Never commit credentials or unrelated cluster data.
-- **Live** tasks are namespace-scoped; **conditional** tasks require a detected capability; **read-only** tasks forbid mutation; **simulation** tasks create local artifacts; **disposable-kubeadm** tasks must never run on Talos. A15 is isolated and live.
+- **Live** tasks are namespace-scoped; **conditional** tasks require a detected capability; **read-only** tasks forbid mutation; **simulation** tasks create local artifacts; **disposable-kubeadm** tasks must never run on Talos. A15 and T10 are isolated and live; T10's Talos/node inspection itself is read-only.
 - Score one task using `tasks/<pillar>/<ID>/score.sh` or `./scripts/score.sh ID`. Teardown uses the matching task wrapper.
 
 ## Cluster Architecture, Installation and Configuration

@@ -135,6 +135,12 @@ def check(task, part):
             assert lines == ['kubectl top nodes', f'kubectl top pods -n {NAMESPACE}'] or lines == [
                 'kubectl top nodes', 'kubectl top pods -n "$CKA_LAB_NAMESPACE"']
             assert e['namespace'] == NAMESPACE and e['pod'].startswith('web-')
+            web = get('deployment', 'web')
+            pod = get('pod', e['pod'])
+            assert owned(web) and web['metadata']['labels'].get('cka-lab.io/task') == 'T08'
+            assert web['spec']['selector']['matchLabels'] == {'app': 'web'}
+            assert owned(pod) and pod['metadata']['labels'].get('cka-lab.io/task') == 'T08'
+            assert pod['metadata']['labels'].get('app') == 'web' and pod['status']['phase'] == 'Running'
             assert any(line.split()[0] == e['pod'] and re.fullmatch(r'\d+m', line.split()[1])
                        and re.fullmatch(r'\d+Mi', line.split()[2]) for line in pod_top.splitlines()[1:])
     elif task == 'T09':
@@ -152,7 +158,8 @@ def check(task, part):
         n = get('node', e['node'], None)
         assert e['runtimeVersion'] == n['status']['nodeInfo']['containerRuntimeVersion']
         p = get('pod', 'toolbox')
-        assert owned(p) and p['spec']['nodeName'] == e['node']
+        assert owned(p) and p['metadata']['labels'].get('cka-lab.io/task') == 'T10'
+        assert p['spec']['nodeName'] == e['node'] and p['status']['phase'] == 'Running'
         if part == 1:
             assert e['podRuntimeClass'] == p['spec'].get('runtimeClassName', '')
             assert e['runtimeVersion'].startswith('containerd://')

@@ -53,7 +53,7 @@ validate_task() {
   IFS=$'\t' read -r id domain max mode req title <<<"$line"
   case "$mode:$req" in
     disposable-kubeadm:*) skip "$id" UNSUPPORTED "$max"; return;;
-    read-only:talosctl) [[ "$TALOSCTL" == true ]] || { skip "$id" UNSUPPORTED "$max"; return; };;
+    read-only:talosctl|live:talosctl) [[ "$TALOSCTL" == true ]] || { skip "$id" UNSUPPORTED "$max"; return; };;
     conditional:metrics) [[ "$METRICS" == true ]] || { skip "$id" SKIP "$max"; return; };;
     conditional:debug) [[ "$DEBUG" == true ]] || { skip "$id" SKIP "$max"; return; };;
     conditional:networkpolicy) [[ "$NETWORKPOLICY" == true ]] || { skip "$id" SKIP "$max"; return; };;

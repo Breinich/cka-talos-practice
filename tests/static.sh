@@ -140,10 +140,18 @@ for row in rows:
 for id, domain, required in [('N02','networking',{'estuary-api'}),
                              ('N10','networking',{'estuary-api','estuary-front'}),
                              ('W13','workloads',{'ember-api'}),
-                             ('T05','troubleshooting',{'dns-stray','web'})]:
+                             ('T05','troubleshooting',{'dns-stray','web'}),
+                             ('T08','troubleshooting',{'web'}),
+                             ('T10','troubleshooting',{'toolbox'})]:
     docs=list(yaml.safe_load_all((pathlib.Path('tasks')/domain/id/'resources/seed.yaml').read_text()))
     assert required <= {d['metadata']['name'] for d in docs}
 assert not (pathlib.Path('tasks/storage/S05/resources/seed.yaml')).exists()
+assert next(row for row in rows if row['id']=='T10')['mode']=='live'
+t08=list(yaml.safe_load_all((pathlib.Path('tasks/troubleshooting/T08/resources/seed.yaml')).read_text()))
+assert len(t08)==1 and t08[0]['kind']=='Deployment'
+assert t08[0]['spec']['template']['metadata']['labels']['cka-lab.io/task']=='T08'
+t10=list(yaml.safe_load_all((pathlib.Path('tasks/troubleshooting/T10/resources/seed.yaml')).read_text()))
+assert len(t10)==1 and t10[0]['kind']=='Pod'
 print('ok: all 60 executable task directories, isolated seeds and standalone prerequisites')
 PYTEST
 CKA_LAB_PREFIX=cka-practice CKA_LAB_NAMESPACE=cka-practice bash -c 'source lib/common.sh; validate_scope'

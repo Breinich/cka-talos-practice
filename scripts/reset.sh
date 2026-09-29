@@ -3,5 +3,4 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 (($#)) || { echo 'usage: $0 TASK_ID [--yes] [--prefix NAME] [--namespace NAME]' >&2; exit 2; }
 id="$1"; shift
-"$ROOT/scripts/task-cli.sh" teardown "$id" "$@"
-"$ROOT/scripts/task-cli.sh" setup "$id" "$@"
+exec "$ROOT/scripts/task-cli.sh" reset "$id" "$@"

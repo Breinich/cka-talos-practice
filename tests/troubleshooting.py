@@ -26,7 +26,7 @@ def check(task, part, accept):
 owner = {'cka-lab.io/owner': 'cka-talos-practice'}
 objects = {}
 def obj(kind, name, spec, status=None):
-    objects[(kind, name)] = {'metadata': {'name': name, 'namespace': mod.NAMESPACE, 'labels': owner,
+    objects[(kind, name)] = {'metadata': {'name': name, 'namespace': mod.NAMESPACE, 'labels': owner.copy(),
                                         'generation': 2}, 'spec': spec, 'status': status or {}}
 
 def get(kind, name, namespace=mod.NAMESPACE):
@@ -97,9 +97,18 @@ with tempfile.TemporaryDirectory() as tmp:
     check('T07', 1, False); check('T07', 2, True)
     (mod.EVIDENCE / 'T07.json').write_text(json.dumps({'first': 'archive-index', 'second': 'edge-cache', 'last': 'probe-scratch', 'pressure': 'memory', 'equalPriority': True}))
     check('T07', 2, False)
+    obj('deployment', 'web', {'selector': {'matchLabels': {'app': 'web'}}})
+    objects['deployment', 'web']['metadata']['labels']['cka-lab.io/task'] = 'T08'
+    obj('pod', 'web-abc', {}, {'phase': 'Running'})
+    objects['pod', 'web-abc']['metadata']['labels'].update({'app': 'web', 'cka-lab.io/task': 'T08'})
     (mod.EVIDENCE / 'T08.json').write_text(json.dumps({'node': 'node-1', 'namespace': mod.NAMESPACE, 'pod': 'web-abc'}))
     (mod.EVIDENCE / 'T08.sh').write_text('kubectl top nodes\nkubectl top pods -n "$CKA_LAB_NAMESPACE"\n')
     check('T08', 1, True); check('T08', 2, True)
+    objects['pod', 'web-abc']['metadata']['labels']['cka-lab.io/task'] = 'T05'
+    check('T08', 1, True); check('T08', 2, False)  # real row, wrong task's Pod
+    objects['pod', 'web-abc']['metadata']['labels']['cka-lab.io/task'] = 'T08'
+    (mod.EVIDENCE / 'T08.json').write_text(json.dumps({'node': 'node-1', 'namespace': mod.NAMESPACE, 'pod': 'web-ghost'}))
+    check('T08', 2, False)  # no actual Pod, even if a name is supplied
     (mod.EVIDENCE / 'T08.json').write_text(json.dumps({'node': 'node-1', 'namespace': 'wrong', 'pod': 'web-abc'}))
     check('T08', 2, False)
     node_status = {'conditions': [{'type': k, 'status': v} for k, v in [('Ready', 'True'), ('MemoryPressure', 'False'), ('DiskPressure', 'False'), ('PIDPressure', 'False')]], 'capacity': {'cpu': '4', 'memory': '8Gi'}, 'allocatable': {'cpu': '3800m', 'memory': '7Gi'}, 'nodeInfo': {'containerRuntimeVersion': 'containerd://2.0'}}
@@ -108,9 +117,14 @@ with tempfile.TemporaryDirectory() as tmp:
     check('T09', 1, True); check('T09', 2, True)
     objects['node', 'node-1']['status']['allocatable']['cpu'] = '3700m'
     check('T09', 2, False)
-    obj('pod', 'toolbox', {'nodeName': 'node-1', 'containers': [{'name': 'toolbox'}], 'ephemeralContainers': [{'name': 'inspect-1', 'targetContainerName': 'toolbox', 'image': 'busybox:1.36', 'command': ['sh', '-c', 'cat /proc/net/route; cat /proc/1/status']}]}, {'ephemeralContainerStatuses': [{'name': 'inspect-1', 'state': {'terminated': {'exitCode': 0}}}]})
     (mod.EVIDENCE / 'T10.json').write_text(json.dumps({'node': 'node-1', 'runtimeVersion': 'containerd://2.0', 'podRuntimeClass': '', 'kubeletService': 'Running', 'containerdService': 'Running'}))
+    check('T10', 1, False); check('T10', 2, False)  # no seeded Pod, no credit
+    obj('pod', 'toolbox', {'nodeName': 'node-1', 'containers': [{'name': 'toolbox'}], 'ephemeralContainers': [{'name': 'inspect-1', 'targetContainerName': 'toolbox', 'image': 'busybox:1.36', 'command': ['sh', '-c', 'cat /proc/net/route; cat /proc/1/status']}]}, {'phase': 'Running', 'ephemeralContainerStatuses': [{'name': 'inspect-1', 'state': {'terminated': {'exitCode': 0}}}]})
+    objects['pod', 'toolbox']['metadata']['labels']['cka-lab.io/task'] = 'T10'
     check('T10', 1, True); check('T10', 2, True)
+    objects['pod', 'toolbox']['metadata']['labels']['cka-lab.io/task'] = 'T12'
+    check('T10', 1, False); check('T10', 2, False)
+    objects['pod', 'toolbox']['metadata']['labels']['cka-lab.io/task'] = 'T10'
     objects['pod', 'toolbox']['spec']['nodeName'] = 'node-2'
     check('T10', 1, False); check('T10', 2, False)
     objects['pod', 'toolbox']['spec']['nodeName'] = 'node-1'
