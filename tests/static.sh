@@ -72,6 +72,7 @@ print('ok: synthetic architecture inputs parse offline')
 PYTEST
 
 ./tests/behavior.sh
+python3 ./tests/workloads.py
 
 grep -q 'kubectl apply' scripts/setup.sh || fail "setup has no fixture apply"
 grep -q 'ns_owned' scripts/teardown.sh || fail "teardown lacks ownership gate"

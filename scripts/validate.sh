@@ -60,6 +60,12 @@ validate_task() {
     conditional:expandable) [[ "$EXPANDABLE" == true ]] || { skip "$id" SKIP "$max"; return; };;
     simulation:helm) [[ "$HELM" == true ]] || { skip "$id" UNSUPPORTED "$max"; return; };;
   esac
+  # Worker-only placement is not exercisable on clusters without enough untainted,
+  # Ready workers; report SKIP rather than awarding credit for Pending Pods.
+  if [[ "$id" == W05 || "$id" == W08 ]]; then
+    eligible="$(kubectl get nodes -l node-role.kubernetes.io/worker -o json 2>/dev/null | python3 "$ROOT/scripts/check_workloads.py" workers "$([[ "$id" == W05 ]] && echo 3 || echo 2)" 2>/dev/null || true)"
+    if [[ "$id" == W05 && "${eligible:-0}" -lt 1 || "$id" == W08 && "${eligible:-0}" -lt 2 ]]; then skip "$id" SKIP "$max"; return; fi
+  fi
   case "$id" in
     A01) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
     A02) begin "$id" "$max"; check python3 "$ROOT/scripts/check_architecture.py" "$id" 1; check python3 "$ROOT/scripts/check_architecture.py" "$id" 2; finish;;
@@ -77,19 +83,19 @@ validate_task() {
     A03) begin "$id" "$max"; check resource_check role relay-reader arch-role; check resource_check rolebinding relay-reader arch-binding; finish;;
     A04) begin "$id" "$max"; check resource_check pod relay-consumer arch-pod; check bash -c "[[ \$(getj pod relay-consumer '{.status.phase}') == Running ]]"; finish;;
     A05) begin "$id" "$max"; check bash -c "[[ \$(kubectl auth can-i list pods -n '$NAMESPACE' --as=system:serviceaccount:'$NAMESPACE':relay-identity) == yes ]]"; check bash -c "[[ \$(kubectl auth can-i delete pods -n '$NAMESPACE' --as=system:serviceaccount:'$NAMESPACE':relay-identity) == no ]]"; finish;;
-    W01) begin "$id" "$max"; check kubectl get deploy resource-app -n "$NAMESPACE"; check bash -c "[[ -n \$(getj deploy resource-app '{.spec.template.spec.containers[0].resources.requests.cpu}') && -n \$(getj deploy resource-app '{.spec.template.spec.containers[0].resources.limits.memory}') ]]"; finish;;
-    W02) begin "$id" "$max"; check bash -c "[[ \$(getj deploy rollout-app '{.spec.strategy.type}') == RollingUpdate ]]"; check bash -c "kubectl rollout status deploy/rollout-app -n '$NAMESPACE' --timeout=1s"; finish;;
-    W03) begin "$id" "$max"; check bash -c "kubectl rollout history deploy/rollout-app -n '$NAMESPACE' | grep -Eq '[2-9]'"; check bash -c "kubectl rollout status deploy/rollout-app -n '$NAMESPACE' --timeout=1s"; finish;;
-    W04) begin "$id" "$max"; check bash -c "[[ \$(getj job one-shot '{.status.conditions[?(@.type==\"Complete\")].status}') == True ]]"; check resource_check cronjob periodic cronjob; finish;;
-    W05) begin "$id" "$max"; check kubectl get ds node-agent -n "$NAMESPACE"; check bash -c "desired=\$(getj ds node-agent '{.status.desiredNumberScheduled}'); ready=\$(getj ds node-agent '{.status.numberReady}'); [[ \$desired =~ ^[0-9]+$ && \$ready =~ ^[0-9]+$ && \$desired -gt 0 && \$ready -eq \$desired ]]"; finish;;
-    W06) begin "$id" "$max"; check bash -c "[[ \$(getj sts ordered-app '{.spec.serviceName}') == ordered-app ]]"; check bash -c "[[ \$(getj svc ordered-app '{.spec.clusterIP}') == None ]]"; finish;;
-    W07) begin "$id" "$max"; check bash -c "kubectl get cm app-config -n '$NAMESPACE' >/dev/null && kubectl get secret app-secret -n '$NAMESPACE' >/dev/null"; check bash -c "v=\$(kubectl get pod config-consumer -n '$NAMESPACE' -o yaml 2>/dev/null); grep -q app-config <<<\"\$v\" && grep -q app-secret <<<\"\$v\""; finish;;
-    W08) begin "$id" "$max"; check bash -c "[[ -n \$(getj deploy affinity-app '{.spec.template.spec.affinity.nodeAffinity}') ]]"; check bash -c "[[ -n \$(getj deploy affinity-app '{.spec.template.spec.affinity.podAntiAffinity}') ]]"; finish;;
-    W09) begin "$id" "$max"; check bash -c "[[ -n \$(getj pod tolerant-app '{.spec.tolerations[0].key}') ]]"; check evidence_has W09 'taint|NoSchedule'; finish;;
-    W10) begin "$id" "$max"; check kubectl get hpa web-hpa -n "$NAMESPACE"; check bash -c "[[ \$(getj hpa web-hpa '{.spec.maxReplicas}') -ge 2 ]]"; finish;;
-    W11) begin "$id" "$max"; check bash -c "[[ -n \$(getj pod hardened-app '{.spec.containers[0].readinessProbe}') ]]"; check bash -c "[[ \$(getj pod hardened-app '{.spec.containers[0].securityContext.allowPrivilegeEscalation}') == false ]]"; finish;;
-    W12) begin "$id" "$max"; check bash -c "[[ -n \$(getj pod composed-app '{.spec.initContainers[0].name}') ]]"; check bash -c "[[ \$(getj pod composed-app '{.spec.containers[*].name}') == *sidecar* ]]"; finish;;
-    W13) begin "$id" "$max"; check bash -c "[[ \$(getj pdb resource-app '{.spec.minAvailable}') == 1 ]]"; check evidence_has W13 'voluntary|involuntary'; finish;;
+    W01) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W02) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W03) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W04) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W05) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W06) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W07) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W08) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W09) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W10) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W11) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W12) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
+    W13) begin "$id" "$max"; check python3 "$ROOT/scripts/check_workloads.py" "$id" 1; check python3 "$ROOT/scripts/check_workloads.py" "$id" 2; finish;;
     N01) begin "$id" "$max"; check bash -c "[[ \$(getj svc app-service '{.spec.type}') == ClusterIP ]]"; check ready_endpoint_for app-service; finish;;
     N02) begin "$id" "$max"; check bash -c "[[ \$(getj svc ordered-headless '{.spec.clusterIP}') == None ]]"; check evidence_has N02 'ordered-headless'; finish;;
     N03) begin "$id" "$max"; check evidence_has N03 'endpoint|address'; check evidence_has N03 'selector|label'; finish;;

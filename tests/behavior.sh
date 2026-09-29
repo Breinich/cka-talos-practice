@@ -14,7 +14,7 @@ assert_score() {
 import json,sys
 score=json.loads(sys.argv[1]); task=score['tasks'][0]
 assert task['status']==sys.argv[2], task
-assert (int(sys.argv[3])==0)==(sys.argv[2]=='PASS'), (task, sys.argv[3])
+assert (int(sys.argv[3])==0)==(sys.argv[2] in ('PASS','SKIP')), (task, sys.argv[3])
 assert not (task['status']=='PARTIAL' and task['score']==task['max']), task
 PY
 }
@@ -111,14 +111,16 @@ export NETWORKPOLICY=true
 printf 'NETWORKPOLICY=true\nGATEWAY=true\n' >"$tmp/state/capabilities.env"
 assert_score N05 FAIL
 assert_score W04 FAIL
-assert_score W05 PARTIAL
+assert_score W05 SKIP
+assert_score W10 SKIP
 assert_score N01 PARTIAL
 assert_score N08 PARTIAL
 assert_score T04 PARTIAL
 assert_score N07 PARTIAL
 export MOCK_MODE=positive
-assert_score W04 PASS
-assert_score W05 PASS
+assert_score W04 FAIL
+assert_score W05 SKIP
+assert_score W10 SKIP
 assert_score N01 PASS
 assert_score N08 PASS
 assert_score T04 PASS
@@ -135,6 +137,11 @@ grep -q 'fixture collision' "$tmp/out"
 if grep -Eq '^(apply|delete|create|label)' "$tmp/log"; then echo 'collision mutated resources' >&2; exit 1; fi
 export MOCK_MODE=setup
 "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
+baseline="$(sha256sum "$tmp/state/before.yaml")"
+"$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
+[[ "$(sha256sum "$tmp/state/before.yaml")" == "$baseline" ]]
+grep -q 'rollout status deployment/ember-recovery' "$tmp/log"
+grep -q 'set image deployment/ember-recovery api=nginx:no-such-tag-cka-practice' "$tmp/log"
 python3 - "$tmp/state/before.yaml" <<'PY'
 import json,sys
 items=json.load(open(sys.argv[1]))['items']

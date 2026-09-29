@@ -25,7 +25,7 @@ W05	workloads	2	live	core	Create a node-spanning DaemonSet
 W06	workloads	2	live	core	Create a StatefulSet with stable identity
 W07	workloads	2	live	core	Use ConfigMap and Secret projections
 W08	workloads	2	live	core	Apply node affinity and pod anti-affinity
-W09	workloads	2	live	core	Use taints and tolerations safely
+W09	workloads	2	simulation	core	Use taints and tolerations safely
 W10	workloads	2	conditional	metrics	Configure an HPA
 W11	workloads	2	live	core	Use probes and security context
 W12	workloads	2	live	core	Use init and sidecar containers

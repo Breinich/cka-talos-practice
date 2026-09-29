@@ -1,0 +1,124 @@
+# Small, owned starting points for independent workload exercises.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ember-api
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: ember-api}}
+  template:
+    metadata: {labels: {app: ember-api, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.27-alpine
+        ports: [{name: http, containerPort: 80}]
+        resources:
+          requests: {cpu: 5m, memory: 8Mi}
+          limits: {cpu: 100m, memory: 64Mi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ember-release
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy: {type: RollingUpdate, rollingUpdate: {maxSurge: 1, maxUnavailable: 0}}
+  selector: {matchLabels: {app: ember-release}}
+  template:
+    metadata: {labels: {app: ember-release, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.26-alpine
+        ports: [{name: http, containerPort: 80}]
+        resources: {requests: {cpu: 5m, memory: 8Mi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ember-recovery
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector: {matchLabels: {app: ember-recovery}}
+  template:
+    metadata: {labels: {app: ember-recovery, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.27-alpine
+        ports: [{name: http, containerPort: 80}]
+        resources: {requests: {cpu: 5m, memory: 8Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ember-ledger
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  clusterIP: None
+  selector: {app: ember-ledger}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ember-ledger
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  serviceName: ember-ledger
+  replicas: 3
+  selector: {matchLabels: {app: ember-ledger}}
+  template:
+    metadata: {labels: {app: ember-ledger, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.27-alpine
+        ports: [{name: http, containerPort: 80}]
+        resources: {requests: {cpu: 5m, memory: 8Mi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ember-placement
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: ember-placement}}
+  template:
+    metadata: {labels: {app: ember-placement, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.27-alpine
+        resources: {requests: {cpu: 5m, memory: 8Mi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ember-autoscale
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: ember-autoscale}}
+  template:
+    metadata: {labels: {app: ember-autoscale, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      containers:
+      - name: api
+        image: nginx:1.27-alpine
+        ports: [{name: http, containerPort: 80}]
+        resources: {requests: {cpu: 20m, memory: 32Mi}, limits: {cpu: 100m, memory: 64Mi}}

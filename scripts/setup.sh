@@ -30,7 +30,10 @@ if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
   for fixture in configmap/lab-info deployment.apps/web service/web pod/toolbox \
                  serviceaccount/relay-identity role.rbac.authorization.k8s.io/relay-reader \
                  rolebinding.rbac.authorization.k8s.io/relay-reader \
-                 deployment.apps/broken-image deployment.apps/broken-ready pod/unschedulable service/broken-service; do
+                 deployment.apps/broken-image deployment.apps/broken-ready pod/unschedulable service/broken-service \
+                 deployment.apps/ember-api deployment.apps/ember-release deployment.apps/ember-recovery \
+                 service/ember-ledger statefulset.apps/ember-ledger deployment.apps/ember-placement \
+                 deployment.apps/ember-autoscale; do
     if kubectl get "$fixture" -n "$NAMESPACE" >/dev/null 2>&1; then
       owner="$(kubectl get "$fixture" -n "$NAMESPACE" -o jsonpath='{.metadata.labels.cka-lab\.io/owner}')"
       [[ "$owner" == cka-talos-practice ]] || die "fixture collision with unowned $fixture in $NAMESPACE"
@@ -72,9 +75,13 @@ if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
 fi
 render_fixture "$ROOT/fixtures/base/lab.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/troubleshooting/broken.yaml" | kubectl apply -f - >/dev/null
+render_fixture "$ROOT/fixtures/base/workloads.yaml" | kubectl apply -f - >/dev/null
+# Establish a real previous ReplicaSet before introducing the failed revision.
+kubectl rollout status deployment/ember-recovery -n "$NAMESPACE" --timeout=90s >/dev/null || die "ember-recovery baseline not ready; no bad revision seeded"
+kubectl set image deployment/ember-recovery api=nginx:no-such-tag-cka-practice -n "$NAMESPACE" >/dev/null
 
 metrics=false; networkpolicy=false; ingress=false; gateway=false; storageclass=false; expandable=false; helm=false; talosctl=false
-kubectl get --raw /apis/metrics.k8s.io/v1beta1 >/dev/null 2>&1 && metrics=true || :
+kubectl get --raw /apis/metrics.k8s.io/v1beta1 >/dev/null 2>&1 && kubectl top nodes >/dev/null 2>&1 && metrics=true || :
 # API presence alone does not prove enforcement. Recognized CNI pods provide a conservative hint.
 if kubectl api-resources --api-group=networking.k8s.io -o name | grep -qx networkpolicies; then
   if kubectl get pods -A -o name 2>/dev/null | grep -Eiq '(cilium|calico|weave|antrea)'; then networkpolicy=true; fi
