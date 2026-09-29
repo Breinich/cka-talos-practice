@@ -64,9 +64,11 @@ for row in rows:
     words=re.findall(r"[A-Za-z0-9][A-Za-z0-9._/-]*", content)
     if len(words) < 180:
         sys.exit(f"tutorial too short to be substantive: {tutorial} ({len(words)} words)")
-    if '## Concept and task-specific procedure' not in content or '## Task-scoped setup, verification, and cleanup' not in content:
+    lowered=content.lower()
+    if '## concept and task-specific procedure' not in lowered or ('## task-scoped workflow' not in lowered and '## external disposable-vm workflow' not in lowered):
         sys.exit(f"tutorial missing substantive sections: {tutorial}")
-    focused=content.split('## Concept and task-specific procedure',1)[1].split('## Task-scoped setup',1)[0]
+    focused=content.split('## Concept and task-specific procedure',1)[1]
+    focused=focused.split('## Task-scoped workflow',1)[0] if '## Task-scoped workflow' in content else focused.split('## External disposable-VM workflow',1)[0]
     if len(re.findall(r"[A-Za-z0-9][A-Za-z0-9._/-]*", focused)) < 60:
         sys.exit(f"task-specific procedure too short: {tutorial}")
     technical_terms=re.findall(r'`([^`]{2,})`', focused)
@@ -75,6 +77,33 @@ for row in rows:
     focused_sections.append(re.sub(r'\s+', ' ', focused.strip()))
 if len(set(focused_sections)) != len(rows):
     sys.exit("task-specific tutorial procedures are not all unique")
+for row in rows:
+    task=row['id']; mode=row['mode']
+    content=(pathlib.Path('tasks')/row['domain']/task/'tutorial.md').read_text().lower()
+    if task in ('A12','A13'):
+        if not all(term in content for term in ('ubuntu/debian', 'disposable', 'talos', 'proxmox-managed talos')):
+            sys.exit(f"kubeadm guide lacks external-VM boundary: {task}")
+        if content.count('```bash') < 2:
+            sys.exit(f"kubeadm guide lacks actionable VM command sequences: {task}")
+        required = (('kubeadm init', '--pod-network-cidr', 'kubeadm token create', 'worker-sandbox', 'flannel') if task == 'A12'
+                    else ('kubeadm upgrade apply', 'apt-mark', 'kubectl drain', 'kubeadm upgrade node', 'kubectl uncordon', 'snapshot'))
+        if not all(term in content for term in required):
+            sys.exit(f"kubeadm guide missing essential lifecycle steps: {task}")
+    else:
+        if 'authorized' not in content or 'unrelated' not in content or 'unique namespace' not in content:
+            sys.exit(f"tutorial lacks scoped-authorization boundary: {task}")
+    if mode == 'simulation' or task == 'A06':
+        if not any(term in content for term in ('offline artifact', 'offline crd analysis')) or not any(term in content for term in ('do not use `kubectl apply`', 'do not apply', 'no live-resource mutation')):
+            sys.exit(f"offline tutorial permits/misses live-apply boundary: {task}")
+    elif mode == 'read-only':
+        if 'read-only observations' not in content or 'do not create a namespace or change any kubernetes resource' not in content:
+            sys.exit(f"read-only tutorial lacks no-mutation workflow: {task}")
+    elif mode == 'conditional':
+        if 'capability-gated' not in content or 'stop with skip' not in content or 'do not install optional shared infrastructure' not in content:
+            sys.exit(f"conditional tutorial lacks capability skip boundary: {task}")
+    elif mode == 'live':
+        if 'authorized live namespace' not in content or 'task-directed change' not in content:
+            sys.exit(f"live tutorial lacks authorized task namespace workflow: {task}")
 PYDOCS
 total_points="$(awk -F '\t' 'NR>1 {sum+=$3} END {print sum}' metadata/tasks.tsv)"
 grep -Fq "($total_points total configured points" README.md || fail "README score total mismatch"
