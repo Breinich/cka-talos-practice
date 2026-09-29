@@ -34,7 +34,8 @@ make test                            # static only; no cluster mutation
 # On another intentionally selected disposable context only:
 ./scripts/setup.sh --yes
 
-less TASKS.md
+less TASKS.md                         # pillar-grouped task index
+less tasks/workloads/W01.md           # one complete task prompt
 ./scripts/validate.sh --task W01
 ./scripts/validate.sh --task W01 --json
 ./scripts/validate.sh              # all tasks, human summary
@@ -44,6 +45,10 @@ less TASKS.md
 Override scope with `CKA_LAB_PREFIX` and `CKA_LAB_NAMESPACE` or setup flags. The namespace must equal or begin with the prefix. Keep evidence under `.lab/evidence/`; it is gitignored. Validators are read-only, deterministic, and print only criterion counts—not answers. Solution notes live separately in `answers/`.
 
 `make setup`, `make score`, `make teardown`, and `make restore` are convenience equivalents. Setup is idempotent: rerunning it restores only seeded fixtures and retains the original pre-setup backup.
+
+### Task organization
+
+`TASKS.md` is the pillar-grouped index. Individual prompts live at `tasks/<pillar>/<ID>.md`; every file repeats the authoritative task ID, mode, capability, points, safety boundary, and one-task human/JSON validation commands. The five directories are `architecture`, `workloads`, `networking`, `storage`, and `troubleshooting`. Machine-readable weights and modes remain centralized in `metadata/tasks.tsv`, while solutions remain outside the task tree under `answers/`.
 
 ## Scoring
 

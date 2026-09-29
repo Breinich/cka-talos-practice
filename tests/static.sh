@@ -14,15 +14,29 @@ awk -F '\t' 'NR>1 {if (NF!=6 || $1!~/^[AWNST][0-9][0-9]$/ || $3!~/^[1-9][0-9]*$/
 missing=0
 while IFS=$'\t' read -r id domain points mode requires title; do
   [[ "$id" == id ]] && continue
-  grep -Eq "\*\*$id[[:space:]]" TASKS.md || { echo "missing prompt: $id" >&2; missing=1; }
+  task_file="tasks/$domain/$id.md"
+  [[ -f "$task_file" ]] || { echo "missing task file: $task_file" >&2; missing=1; continue; }
+  grep -Fq "# $id — $title" "$task_file" || { echo "task title mismatch: $id" >&2; missing=1; }
+  grep -Fq "| Task ID | \`$id\` |" "$task_file" || { echo "task ID metadata missing: $id" >&2; missing=1; }
+  grep -Fq "| CKA pillar | \`$domain\` |" "$task_file" || { echo "task pillar mismatch: $id" >&2; missing=1; }
+  grep -Fq "| Mode | \`$mode\` |" "$task_file" || { echo "task mode mismatch: $id" >&2; missing=1; }
+  grep -Fq "| Capability | \`$requires\` |" "$task_file" || { echo "task capability mismatch: $id" >&2; missing=1; }
+  grep -Fq "| Points | $points |" "$task_file" || { echo "task points mismatch: $id" >&2; missing=1; }
+  grep -Fq "./scripts/validate.sh --task $id" "$task_file" || { echo "task validation command missing: $id" >&2; missing=1; }
+  grep -Fq "($task_file)" TASKS.md || { echo "task index link missing: $id" >&2; missing=1; }
   if ! grep -Eq "^[[:space:]]+$id\)" scripts/validate.sh && [[ "$mode" != disposable-kubeadm ]]; then
     echo "missing validator: $id" >&2; missing=1
   fi
 done < metadata/tasks.tsv
 [[ $missing -eq 0 ]] || fail "ID consistency"
-# Every explicit case must have metadata.
+# Every explicit validator and task file must have matching metadata.
 while read -r id; do awk -F '\t' -v id="$id" 'NR>1 && $1==id {ok=1} END{exit !ok}' metadata/tasks.tsv || fail "orphan validator $id"; done < <(sed -nE 's/^[[:space:]]+([AWNST][0-9]{2})\).*/\1/p' scripts/validate.sh)
-printf 'ok: %s task IDs and validator metadata agree\n' "$(($(wc -l < metadata/tasks.tsv)-1))"
+while read -r task_file; do
+  id="$(basename "$task_file" .md)"; domain="$(basename "$(dirname "$task_file")")"
+  awk -F '\t' -v id="$id" -v domain="$domain" 'NR>1 && $1==id && $2==domain {ok=1} END{exit !ok}' metadata/tasks.tsv || fail "orphan or misplaced task file $task_file"
+done < <(find tasks -type f -name '*.md' | sort)
+[[ "$(find tasks -type f -name '*.md' | wc -l)" -eq "$(($(wc -l < metadata/tasks.tsv)-1))" ]] || fail "task file count mismatch"
+printf 'ok: %s task files, IDs, index links, and validator metadata agree\n' "$(($(wc -l < metadata/tasks.tsv)-1))"
 
 for f in fixtures/base/*.yaml fixtures/troubleshooting/*.yaml; do
   grep -q 'cka-lab.io/owner: cka-talos-practice' "$f" || fail "fixture lacks owner label: $f"
