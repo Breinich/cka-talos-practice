@@ -41,12 +41,12 @@ N08	networking	2	live	core	Repair an incorrect backend port
 N09	networking	2	simulation	core	Triage a DNS timeout without editing CoreDNS
 N10	networking	1	live	core	Check the repaired service through a local tunnel
 N11	networking	2	simulation	core	Model two service exposures without applying them
-S01	storage	2	live	core	Create and mount emptyDir
-S02	storage	3	simulation	core	Model a static PV and PVC safely
-S03	storage	2	conditional	storageclass	Provision a dynamic PVC
-S04	storage	2	read-only	core	Inspect StorageClasses and CSI drivers
-S05	storage	2	conditional	expandable	Expand and verify a volume claim
-S06	storage	2	live	core	Use access modes and reclaim policy
+S01	storage	2	live	core	Restore the shared workspace
+S02	storage	3	simulation	core	Repair an offline archive binding
+S03	storage	2	conditional	storageclass	Bind a disposable data claim
+S04	storage	2	read-only	core	Inventory storage without mutating it
+S05	storage	2	conditional	expandable	Grow a bound disposable claim
+S06	storage	2	simulation	core	Protect an offline records volume
 T01	troubleshooting	2	live	core	Repair a broken Deployment image
 T02	troubleshooting	2	live	core	Repair failed readiness
 T03	troubleshooting	2	live	core	Repair an unschedulable Pod

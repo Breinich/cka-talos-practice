@@ -1,0 +1,24 @@
+# S01 starts with an unshared workspace: the reader has no mount.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lighthouse-workspace
+  namespace: __NAMESPACE__
+  labels: {cka-lab.io/owner: cka-talos-practice, cka-lab.io/task: S01}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: lighthouse-workspace}}
+  template:
+    metadata: {labels: {app: lighthouse-workspace, cka-lab.io/owner: cka-talos-practice}}
+    spec:
+      volumes: [{name: workspace, emptyDir: {}}]
+      containers:
+      - name: producer
+        image: busybox:1.36
+        command: [sh, -c, "sleep 7d"]
+        volumeMounts: [{name: workspace, mountPath: /workspace}]
+        resources: {requests: {cpu: 5m, memory: 8Mi}}
+      - name: consumer
+        image: busybox:1.36
+        command: [sh, -c, "sleep 7d"]
+        resources: {requests: {cpu: 5m, memory: 8Mi}}

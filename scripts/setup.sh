@@ -34,7 +34,7 @@ if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
                  deployment.apps/ember-api deployment.apps/ember-release deployment.apps/ember-recovery \
                  service/ember-ledger statefulset.apps/ember-ledger deployment.apps/ember-placement \
                  deployment.apps/ember-autoscale deployment.apps/estuary-api service/estuary-front \
-                 service/estuary-catalog service/estuary-port; do
+                 service/estuary-catalog service/estuary-port deployment.apps/lighthouse-workspace; do
     if kubectl get "$fixture" -n "$NAMESPACE" >/dev/null 2>&1; then
       owner="$(kubectl get "$fixture" -n "$NAMESPACE" -o jsonpath='{.metadata.labels.cka-lab\.io/owner}')"
       [[ "$owner" == cka-talos-practice ]] || die "fixture collision with unowned $fixture in $NAMESPACE"
@@ -78,6 +78,7 @@ render_fixture "$ROOT/fixtures/base/lab.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/troubleshooting/broken.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/base/workloads.yaml" | kubectl apply -f - >/dev/null
 render_fixture "$ROOT/fixtures/base/networking.yaml" | kubectl apply -f - >/dev/null
+render_fixture "$ROOT/fixtures/base/storage.yaml" | kubectl apply -f - >/dev/null
 # Establish a real previous ReplicaSet before introducing the failed revision.
 kubectl rollout status deployment/ember-recovery -n "$NAMESPACE" --timeout=90s >/dev/null || die "ember-recovery baseline not ready; no bad revision seeded"
 kubectl set image deployment/ember-recovery api=nginx:no-such-tag-cka-practice -n "$NAMESPACE" >/dev/null
@@ -98,14 +99,22 @@ if has_httproutes; then
     fi
   done < <(kubectl get gateway.gateway.networking.k8s.io -n "$NAMESPACE" -o name 2>/dev/null || true)
 fi
-default_sc="$(kubectl get storageclass -o jsonpath='{range .items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")]}{.metadata.name}{end}' 2>/dev/null || true)"
-[[ -n "$default_sc" ]] && storageclass=true || :
-[[ -n "$default_sc" && "$(kubectl get storageclass "$default_sc" -o jsonpath='{.allowVolumeExpansion}' 2>/dev/null)" == true ]] && expandable=true || :
+# No default class is automatically authorized for persistent lab data. An operator
+# must explicitly approve one known disposable backend and its manual cleanup plan.
+selected_sc="${CKA_LAB_STORAGE_CLASS:-}"
+if [[ "${CKA_LAB_STORAGE_APPROVED:-false}" == true && "$selected_sc" =~ ^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$ ]]; then
+  if sc_json="$(kubectl get storageclass "$selected_sc" -o json 2>/dev/null)"; then
+    if python3 -c 'import json,sys; x=json.load(sys.stdin); assert x["provisioner"] not in ("kubernetes.io/no-provisioner", ""); assert x.get("reclaimPolicy") == "Delete"; assert x.get("volumeBindingMode") in ("Immediate", "WaitForFirstConsumer")' <<<"$sc_json" 2>/dev/null; then
+      storageclass=true
+      if python3 -c 'import json,sys; assert json.load(sys.stdin).get("allowVolumeExpansion") is True' <<<"$sc_json" 2>/dev/null; then expandable=true; fi
+    fi
+  fi
+fi
 command -v helm >/dev/null 2>&1 && helm=true || :
 command -v talosctl >/dev/null 2>&1 && talosctl get members -o json >/dev/null 2>&1 && talosctl=true || :
 {
-  printf 'METRICS=%s\nNETWORKPOLICY=%s\nINGRESS=%s\nGATEWAY=%s\nSTORAGECLASS=%s\nEXPANDABLE=%s\nHELM=%s\nTALOSCTL=%s\n' \
-    "$metrics" "$networkpolicy" "$ingress" "$gateway" "$storageclass" "$expandable" "$helm" "$talosctl"
+  printf 'METRICS=%s\nNETWORKPOLICY=%s\nINGRESS=%s\nGATEWAY=%s\nSTORAGECLASS=%s\nEXPANDABLE=%s\nCKA_LAB_STORAGE_CLASS=%q\nHELM=%s\nTALOSCTL=%s\n' \
+    "$metrics" "$networkpolicy" "$ingress" "$gateway" "$storageclass" "$expandable" "$selected_sc" "$helm" "$talosctl"
 } >"$STATE_DIR/capabilities.env"
 
 log "Lab ready in namespace $NAMESPACE. Capabilities:"

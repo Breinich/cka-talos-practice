@@ -84,7 +84,24 @@ assert (base/'chart/templates/deployment.yaml').is_file()
 print('ok: synthetic architecture inputs parse offline')
 PYTEST
 
+python3 - <<'PYTEST'
+import yaml
+s=list(yaml.safe_load_all(open('fixtures/base/storage.yaml')))
+assert len(s)==1 and s[0]['metadata']['name']=='lighthouse-workspace'
+c=s[0]['spec']['template']['spec']['containers']
+assert c[0]['volumeMounts']==[{'name':'workspace','mountPath':'/workspace'}]
+assert 'volumeMounts' not in c[1]
+for name in ('static-broken','reclaim-broken'):
+    d=list(yaml.safe_load_all(open(f'samples/storage/{name}.yaml')))
+    assert d[0]['spec']['storageClassName']==''
+    assert d[0]['metadata']['labels']['cka-lab.io/prefix']=='__PREFIX__'
+    assert d[1]['metadata']['namespace']=='__NAMESPACE__'
+assert list(yaml.safe_load_all(open('samples/storage/static-broken.yaml')))[1]['spec']['accessModes']!=['ReadWriteOnce']
+assert list(yaml.safe_load_all(open('samples/storage/reclaim-broken.yaml')))[0]['spec']['persistentVolumeReclaimPolicy']=='Delete'
+print('ok: seeded storage fault and offline broken binding/policy inputs')
+PYTEST
 ./tests/behavior.sh
+python3 ./tests/storage.py
 python3 ./tests/workloads.py
 python3 ./tests/networking.py
 

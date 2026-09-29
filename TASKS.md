@@ -69,12 +69,12 @@ Tasks are organized by the five current CKA pillars. Each task file contains its
 
 | ID | Task |
 |---|---|
-| [S01](tasks/storage/S01.md) | Create and mount emptyDir |
-| [S02](tasks/storage/S02.md) | Model a static PV and PVC safely |
-| [S03](tasks/storage/S03.md) | Provision a dynamic PVC |
-| [S04](tasks/storage/S04.md) | Inspect StorageClasses and CSI drivers |
-| [S05](tasks/storage/S05.md) | Expand and verify a volume claim |
-| [S06](tasks/storage/S06.md) | Use access modes and reclaim policy |
+| [S01](tasks/storage/S01.md) | Restore the shared workspace |
+| [S02](tasks/storage/S02.md) | Repair an offline archive binding |
+| [S03](tasks/storage/S03.md) | Bind a disposable data claim |
+| [S04](tasks/storage/S04.md) | Inventory storage without mutating it |
+| [S05](tasks/storage/S05.md) | Grow a bound disposable claim |
+| [S06](tasks/storage/S06.md) | Protect an offline records volume |
 
 ## Troubleshooting
 

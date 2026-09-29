@@ -17,6 +17,7 @@ META="$ROOT/metadata/tasks.tsv"; EVIDENCE="$STATE_DIR/evidence"
 CAP="$STATE_DIR/capabilities.env"
 METRICS=false; NETWORKPOLICY=false; INGRESS=false; GATEWAY=false; STORAGECLASS=false; EXPANDABLE=false; HELM=false; TALOSCTL=false
 [[ -r "$CAP" ]] && source "$CAP"
+export CKA_LAB_STORAGE_CLASS="${CKA_LAB_STORAGE_CLASS:-}"
 
 TOTAL=0; EARNED=0; RESULTS=(); CUR=; MAX=0; CHECKS=0; GOOD=0
 meta_line() { awk -F '\t' -v id="$1" 'NR>1 && $1==id {print; exit}' "$META"; }
@@ -101,12 +102,11 @@ validate_task() {
       check python3 "$ROOT/scripts/check_networking.py" "$id" 1
       check python3 "$ROOT/scripts/check_networking.py" "$id" 2
       finish;;
-    S01) begin "$id" "$max"; check bash -c "[[ -n \$(getj pod scratch-app '{.spec.volumes[0].emptyDir}') ]]"; check bash -c "[[ -n \$(getj pod scratch-app '{.spec.containers[0].volumeMounts[0].mountPath}') ]]"; finish;;
-    S02) begin "$id" "$max"; check bash -c "grep -Eq '^kind: PersistentVolume$' '$EVIDENCE/S02-static.yaml' && grep -Eq '^kind: PersistentVolumeClaim$' '$EVIDENCE/S02-static.yaml' && grep -Eq '^kind: Pod$' '$EVIDENCE/S02-static.yaml'"; check bash -c "grep -q 'cka-lab.io/owner: cka-talos-practice' '$EVIDENCE/S02-static.yaml' && grep -q 'cka-lab.io/prefix: $PREFIX' '$EVIDENCE/S02-static.yaml' && grep -q 'volumeName:' '$EVIDENCE/S02-static.yaml'"; finish;;
-    S03) begin "$id" "$max"; check kubectl get pvc dynamic-claim -n "$NAMESPACE"; check bash -c "[[ \$(getj pvc dynamic-claim '{.status.phase}') == Bound ]]"; finish;;
-    S04) begin "$id" "$max"; check evidence_has S04 'storageclass'; check evidence_has S04 'csi|provisioner'; finish;;
-    S05) begin "$id" "$max"; check kubectl get pvc expandable-claim -n "$NAMESPACE"; check evidence_has S05 'resize|capacity|expand'; finish;;
-    S06) begin "$id" "$max"; check evidence_has S06 'ReadWriteOnce|ReadOnlyMany|ReadWriteMany'; check evidence_has S06 'Retain|Delete|reclaim'; finish;;
+    S01|S02|S03|S04|S05|S06)
+      begin "$id" "$max"
+      check python3 "$ROOT/scripts/check_storage.py" "$id" 1
+      check python3 "$ROOT/scripts/check_storage.py" "$id" 2
+      finish;;
     T01) begin "$id" "$max"; check bash -c "kubectl rollout status deploy/broken-image -n '$NAMESPACE' --timeout=1s"; check bash -c "[[ \$(getj deploy broken-image '{.spec.template.spec.containers[0].image}') != *no-such* ]]"; finish;;
     T02) begin "$id" "$max"; check bash -c "kubectl rollout status deploy/broken-ready -n '$NAMESPACE' --timeout=1s"; check bash -c "[[ \$(getj deploy broken-ready '{.spec.template.spec.containers[0].readinessProbe.httpGet.port}') != 81 ]]"; finish;;
     T03) begin "$id" "$max"; check bash -c "[[ \$(getj pod unschedulable '{.status.phase}') == Running ]]"; check bash -c "[[ -z \$(getj pod unschedulable '{.spec.nodeSelector.cka-lab\\.io/nonexistent}') ]]"; finish;;

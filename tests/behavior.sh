@@ -110,6 +110,10 @@ PYTEST
 export NETWORKPOLICY=true
 printf 'NETWORKPOLICY=true\nGATEWAY=true\n' >"$tmp/state/capabilities.env"
 assert_score N05 FAIL
+assert_score S03 SKIP
+assert_score S05 SKIP
+assert_score S01 FAIL
+assert_score S04 FAIL
 assert_score W04 FAIL
 assert_score W05 SKIP
 assert_score W10 SKIP
@@ -129,6 +133,10 @@ assert_score N05 FAIL
 if grep -Eq '^(apply|delete|create|label)' "$tmp/log"; then echo 'mock scorer mutated resources' >&2; exit 1; fi
 printf 'ok: mocked legacy scorers and rejection of networking keyword-only evidence\n'
 
+export MOCK_MODE=collision-storage
+if "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1; then echo 'storage fixture collision accepted' >&2; exit 1; fi
+grep -q 'fixture collision with unowned deployment.apps/lighthouse-workspace' "$tmp/out"
+[[ ! -f "$tmp/state/state.env" ]]
 export MOCK_MODE=collision-network
 if "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1; then echo 'network fixture collision accepted' >&2; exit 1; fi
 grep -q 'fixture collision with unowned service/estuary-front' "$tmp/out"
@@ -141,6 +149,14 @@ grep -q 'fixture collision' "$tmp/out"
 if grep -Eq '^(apply|delete|create|label)' "$tmp/log"; then echo 'collision mutated resources' >&2; exit 1; fi
 export MOCK_MODE=setup
 "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
+grep -q '^STORAGECLASS=false$' "$tmp/state/capabilities.env"
+grep -q 'get deployment.apps/lighthouse-workspace -n cka-practice' "$tmp/log"
+CKA_LAB_STORAGE_CLASS=disposable-csi CKA_LAB_STORAGE_APPROVED=true "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
+grep -q '^STORAGECLASS=true$' "$tmp/state/capabilities.env"
+grep -q '^EXPANDABLE=true$' "$tmp/state/capabilities.env"
+# An explicit approved class is required; a default class or stale opt-in cannot enable a later run.
+"$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
+grep -q '^STORAGECLASS=false$' "$tmp/state/capabilities.env"
 baseline="$(sha256sum "$tmp/state/before.yaml")"
 "$ROOT/scripts/setup.sh" >"$tmp/out" 2>&1
 [[ "$(sha256sum "$tmp/state/before.yaml")" == "$baseline" ]]

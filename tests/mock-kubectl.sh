@@ -14,6 +14,8 @@ case "$*" in
   'get ns '*|'get namespace '*) exit;;
   'get configmap/lab-info '*) [[ "$MOCK_MODE" == collision ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
   'get service/estuary-front '*) [[ "$MOCK_MODE" == collision-network ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
+  'get deployment.apps/lighthouse-workspace '*) [[ "$MOCK_MODE" == collision-storage ]] && { case "$*" in *jsonpath*) echo unrelated; exit;; esac; exit 0; }; exit 1;;
+  'get storageclass disposable-csi -o json') echo '{"provisioner":"example.test/csi","reclaimPolicy":"Delete","volumeBindingMode":"WaitForFirstConsumer","allowVolumeExpansion":true}'; exit;;
   'get '*'-o jsonpath='*)
     case "$*" in
       *'endpointslice '* ) [[ "$MOCK_MODE" == positive ]] && echo 'true|10.1.2.3'; exit;;
